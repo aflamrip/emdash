@@ -11,7 +11,7 @@ import flyweb from "astro-flyweb";
 
 export default defineConfig({
 	output: "server",
-	site: "https://ma3ak.top",
+	site: "https://emdash.aflamrip.workers.dev",
 	adapter: cloudflare(),
 	cache: {
 		provider: cacheCloudflare(),
@@ -35,13 +35,13 @@ export default defineConfig({
 		emdash({
 			database: d1({ binding: "DB", session: "auto", coalesce: true }),
 			storage: r2({ binding: "MEDIA" }),
-			siteUrl: "https://ma3ak.top",
+			siteUrl: "https://emdash.aflamrip.workers.dev",
 		}),
 		flyweb({
 			entity: "معاك سيما",
 			type: "entertainment",
 			description: "منصة مشاهدة أحدث الأفلام والمسلسلات العربية والأجنبية والحلقات بجودة فائقة Full HD",
-			url: "https://ma3ak.top",
+			url: "https://emdash.aflamrip.workers.dev",
 			resources: {
 				movies: {
 					path: "/api/flyweb/movies",
