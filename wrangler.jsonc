@@ -5,7 +5,7 @@
 	"compatibility_date": "2026-02-24",
 	"compatibility_flags": ["nodejs_compat"],
 	"vars": {
-		"SITE_URL": "https://ma3ak.top"
+		"SITE_URL": "https://emdash.aflamrip.workers.dev"
 	},
 	"d1_databases": [
 		{
