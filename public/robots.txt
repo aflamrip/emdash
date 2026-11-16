@@ -1,0 +1,27 @@
+# robots.txt for https://ma3ak.top
+User-agent: Googlebot
+Allow: /
+Disallow: /_emdash/
+Disallow: /search?*
+
+User-agent: Bingbot
+Allow: /
+Disallow: /_emdash/
+Disallow: /search?*
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: *
+Allow: /
+Allow: /_astro/
+Allow: /api/flyweb/
+Disallow: /_emdash/
+Disallow: /search?*
+
+# Sitemaps
+Sitemap: https://ma3ak.top/sitemap.xml
+Sitemap: https://ma3ak.top/sitemap-video.xml

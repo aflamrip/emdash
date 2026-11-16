@@ -1,0 +1,24 @@
+---
+interface Props {
+	variant?: "brand" | "quality" | "gold" | "muted";
+	class?: string;
+}
+
+const {
+	variant = "brand",
+	class: className = "",
+} = Astro.props;
+
+const variantStyles: Record<string, string> = {
+	brand: "bg-[var(--color-brand)] text-[var(--color-on-brand)] shadow-sm shadow-[var(--color-brand)]/30",
+	quality: "bg-[var(--color-fill)] text-[var(--color-text)] border border-[var(--color-border)]",
+	gold: "bg-[#f5c518] text-black font-bold",
+	muted: "bg-[var(--color-fill-strong)] text-[var(--color-text-secondary)] border border-[var(--color-border)]",
+};
+---
+
+<span
+	class={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold tracking-wider ${variantStyles[variant] || variantStyles.brand} ${className}`}
+>
+	<slot />
+</span>

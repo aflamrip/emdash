@@ -1,0 +1,37 @@
+<script lang="ts">
+	interface Props {
+		placeholder?: string;
+	}
+
+	let { placeholder = "🔍 ابحث عن فيلم أو مسلسل..." }: Props = $props();
+
+	let searchQuery = $state("");
+
+	function handleSearch(e: SubmitEvent) {
+		e.preventDefault();
+		if (searchQuery.trim()) {
+			window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
+		}
+	}
+</script>
+
+<form
+	onsubmit={handleSearch}
+	class="relative w-full max-w-md mx-auto"
+>
+	<input
+		type="text"
+		bind:value={searchQuery}
+		{placeholder}
+		class="w-full bg-[var(--color-fill)] hover:bg-[var(--color-fill-strong)] focus:bg-[var(--color-surface)] text-[var(--color-text)] placeholder:text-muted text-sm rounded-full py-2 pl-4 pr-10 border border-[var(--color-border)] focus:border-[var(--color-brand)] focus:ring-1 focus:ring-[var(--color-brand)] outline-none transition-all duration-200"
+	/>
+	<button
+		type="submit"
+		aria-label="بحث"
+		class="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-[var(--color-brand)] transition-colors cursor-pointer"
+	>
+		<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+			<path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+		</svg>
+	</button>
+</form>

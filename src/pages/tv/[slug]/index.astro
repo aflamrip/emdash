@@ -1,0 +1,292 @@
+---
+import CimaLayout from "../../../layouts/CimaLayout.astro";
+import Breadcrumbs from "../../../components/molecules/Breadcrumbs.astro";
+import Chip from "../../../components/atoms/Chip.astro";
+import Badge from "../../../components/atoms/Badge.astro";
+import SeasonsTabs from "../../../components/organisms/SeasonsTabs.svelte";
+import HorizontalRail from "../../../components/molecules/HorizontalRail.astro";
+import MediaCard from "../../../components/molecules/MediaCard.astro";
+import {
+	getEmDashEntry,
+	getEntryTerms,
+	getEmDashCollection,
+} from "emdash";
+
+const { slug } = Astro.params;
+if (!slug) {
+	return Astro.redirect("/tv");
+}
+
+let tvEntry: any = null;
+let terms: any[] = [];
+let seasonsData: any[] = [];
+let similarTv: any[] = [];
+let directorPerson: any = null;
+let castPeople: any[] = [];
+let categoryTerms: any[] = [];
+let genreTerms: any[] = [];
+
+try {
+	// 1. جلب المسلسل مع كل المراجع الهرمية دفعة واحدة
+	const tvRes = await getEmDashEntry("tv", slug, {
+		references: {
+			director: true,
+			peoples: true,
+			seasons: { limit: 20 },
+		},
+	}).catch(() => getEmDashEntry("tv", slug));
+
+	tvEntry = tvRes.entry;
+
+	if (!tvEntry) {
+		return Astro.redirect("/404");
+	}
+
+	// 2. جلب التصنيفات
+	if (tvEntry?.data?.id) {
+		terms = await getEntryTerms("tv", tvEntry.data.id).catch(() => []);
+	}
+
+	categoryTerms = terms.filter((t: any) => t.name === "category");
+	genreTerms = terms.filter((t: any) => t.name === "genre" || t.name === "tv_genre");
+
+	// 3. المواسم عبر References API (الطريقة الصحيحة حسب EmDash)
+	const rawSeasons: any[] = tvEntry?.references?.seasons?.entries ?? [];
+
+	// 4. لكل موسم جلب حلقاته عبر References API هرمياً
+	const seasonPromises = rawSeasons.map(async (season: any) => {
+		const seasonRes = await getEmDashEntry("seasons", season.id, {
+			references: { episodes: { limit: 100 } },
+		}).catch(() => null);
+
+		const fullSeason = seasonRes?.entry ?? season;
+		const episodes: any[] = fullSeason?.references?.episodes?.entries ?? [];
+
+		return {
+			id: fullSeason.data?.id ?? fullSeason.id,
+			slug: fullSeason.id,
+			season_number: fullSeason.data?.season_number ?? 1,
+			title: fullSeason.data?.title ?? `الموسم ${fullSeason.data?.season_number ?? 1}`,
+			episodes: episodes
+				.sort((a: any, b: any) => (a.data?.episode_number ?? 0) - (b.data?.episode_number ?? 0))
+				.map((ep: any) => ({
+					id: ep.data?.id ?? ep.id,
+					slug: ep.id,
+					episode_number: ep.data?.episode_number,
+					title: ep.data?.title,
+					duration: ep.data?.duration,
+				})),
+		};
+	});
+
+	seasonsData = (await Promise.all(seasonPromises)).sort(
+		(a, b) => (a.season_number ?? 0) - (b.season_number ?? 0)
+	);
+
+	// 5. طاقم العمل من References API
+	if (tvEntry?.references?.director?.entries?.length) {
+		directorPerson = tvEntry.references.director.entries[0];
+	}
+	if (tvEntry?.references?.peoples?.entries?.length) {
+		castPeople = tvEntry.references.peoples.entries;
+	}
+
+	// 6. مسلسلات مشابهة
+	const allTvRes = await getEmDashCollection("tv", { limit: 8 }).catch(() => ({ entries: [] }));
+	similarTv = (allTvRes.entries ?? []).filter((t: any) => t.id !== slug);
+} catch (e) {
+	console.error("Error fetching tv detail:", e);
+}
+
+if (!tvEntry) {
+	return Astro.redirect("/404");
+}
+
+const series = tvEntry.data;
+const posterUrl =
+	typeof series.featured_image === "string"
+		? series.featured_image
+		: series.featured_image?.src ??
+			"https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=800&h=1200&fit=crop";
+
+const pageTitle = `مسلسل ${series.title} – المواسم والحلقات | معاك سيما`;
+const canonicalUrl = new URL(`/tv/${slug}`, Astro.site ?? Astro.url.origin).href;
+
+// Schema.org TVSeries Structured Data
+const tvSeriesSchema = {
+	"@context": "https://schema.org",
+	"@type": "TVSeries",
+	"name": series.title,
+	"description": series.excerpt,
+	"image": posterUrl,
+	"url": canonicalUrl,
+	"numberOfSeasons": seasonsData.length,
+	...(directorPerson ? {
+		"director": {
+			"@type": "Person",
+			"name": directorPerson.data.title,
+			"url": new URL(`/people/${directorPerson.id}`, Astro.site ?? Astro.url.origin).href,
+		}
+	} : {}),
+	"actor": castPeople.map((actor: any) => ({
+		"@type": "Person",
+		"name": actor.data.title,
+		"url": new URL(`/people/${actor.id}`, Astro.site ?? Astro.url.origin).href,
+	})),
+};
+---
+
+<CimaLayout
+	title={pageTitle}
+	description={series.excerpt}
+	image={posterUrl}
+	type="video.tv_show"
+	content={{ collection: "tv", id: tvEntry.data.id, slug }}
+>
+	<div class="md3-container pt-3">
+		<!-- Breadcrumbs -->
+		<Breadcrumbs
+			items={[
+				{ label: "المسلسلات", href: "/tv" },
+				{ label: series.title },
+			]}
+		/>
+
+		<!-- Series Header Card -->
+		<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 md:p-6 my-6 shadow-xl transition-colors" {...tvEntry.edit}>
+			<div class="flex flex-col md:flex-row gap-6">
+				<!-- Poster -->
+				<div class="w-full md:w-56 shrink-0 flex flex-col items-center">
+					<div class="relative w-48 md:w-full aspect-[2/3] rounded-xl overflow-hidden shadow-2xl border border-[var(--color-border-strong)] skeleton-shimmer">
+						<img
+							src={posterUrl}
+							alt={series.title}
+							class="w-full h-full object-cover relative z-10"
+							loading="eager"
+						/>
+						<div class="absolute top-2 right-2 z-20">
+							<Badge variant="brand">مسلسل</Badge>
+						</div>
+					</div>
+				</div>
+
+				<!-- Details -->
+				<div class="flex-1 flex flex-col justify-start">
+					<h1 class="text-xl md:text-3xl font-extrabold text-[var(--color-text)] tracking-wide" {...tvEntry.edit?.title}>
+						مسلسل {series.title}
+					</h1>
+
+					<!-- Meta Badges -->
+					<div class="flex flex-wrap items-center gap-3 my-3 text-xs md:text-sm text-[var(--color-text-secondary)]">
+						{series.release && (
+							<span class="flex items-center gap-1 font-semibold text-[var(--color-text)] bg-[var(--color-fill)] px-2.5 py-1 rounded-md border border-[var(--color-border)]">
+								📅 {series.release}
+							</span>
+						)}
+						<span class="flex items-center gap-1 bg-[var(--color-fill)] px-2.5 py-1 rounded-md border border-[var(--color-border)] text-[var(--color-text)]">
+							📺 {seasonsData.length} {seasonsData.length === 1 ? "موسم" : "مواسم"}
+						</span>
+						<span class="bg-[var(--color-fill)] px-2.5 py-1 rounded-md border border-[var(--color-border)] text-xs text-muted">
+							Full HD
+						</span>
+					</div>
+
+					<!-- Category / Section (القسم) -->
+					{categoryTerms.length > 0 && (
+						<div class="flex flex-wrap items-center gap-2 mb-3">
+							<span class="text-xs text-[var(--color-text-secondary)] font-semibold">القسم:</span>
+							{categoryTerms.map((cat: any) => (
+								<Chip href={`/category/${cat.slug}`}>
+									📁 {cat.label}
+								</Chip>
+							))}
+						</div>
+					)}
+
+					<!-- Genres / Type (التصنيف الفني) -->
+					{genreTerms.length > 0 && (
+						<div class="flex flex-wrap items-center gap-2 mb-4">
+							<span class="text-xs text-[var(--color-text-secondary)] font-semibold">التصنيف الفني:</span>
+							{genreTerms.map((g: any) => (
+								<Chip href={`/tv/genre/${g.slug}`}>
+									🏷️ {g.label}
+								</Chip>
+							))}
+						</div>
+					)}
+
+					<!-- Story Synopsis -->
+					<div class="border-t border-[var(--color-border)] pt-4 mb-4">
+						<h3 class="text-sm font-bold text-[var(--color-text)] mb-1.5 flex items-center gap-1.5">
+							<span>📖</span>
+							<span>قصة المسلسل:</span>
+						</h3>
+						<p class="text-[var(--color-text-secondary)] text-sm leading-relaxed">
+							{series.excerpt ?? "لا توجد قصة متاحة."}
+						</p>
+					</div>
+
+					<!-- Cast & Crew (طاقم العمل) -->
+					{(directorPerson || castPeople.length > 0) && (
+						<div class="border-t border-[var(--color-border)] pt-5">
+							<div class="flex items-center gap-2 mb-3">
+								<span class="text-base md:text-lg font-bold text-[var(--color-text)]">طاقم العمل</span>
+								<svg class="w-5 h-5 text-[var(--color-brand)] stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+								</svg>
+							</div>
+
+							<div class="flex flex-wrap items-center gap-2.5">
+								{directorPerson && (
+									<a
+										href={`/people/${directorPerson.id}`}
+										class="inline-flex items-center px-4 py-2 rounded-xl bg-[var(--color-fill-strong)] hover:bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-brand)] text-xs md:text-sm font-semibold text-[var(--color-text)] hover:text-[var(--color-brand)] transition-all shadow-sm"
+									>
+										<span>إخراج: {directorPerson.data.title ?? "المخرج"}</span>
+									</a>
+								)}
+
+								{castPeople.map((person) => (
+									<a
+										href={`/people/${person.id}`}
+										class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-fill)] hover:bg-[var(--color-fill-strong)] border border-[var(--color-border)] hover:border-[var(--color-brand)] text-xs md:text-sm font-medium text-[var(--color-text)] hover:text-[var(--color-brand)] transition-all shadow-sm group"
+									>
+										<span>{person.data.title}</span>
+										<svg class="w-4 h-4 text-[var(--color-muted)] group-hover:text-[var(--color-brand)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+										</svg>
+									</a>
+								))}
+							</div>
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+
+		<!-- Interactive Seasons & Episodes (Svelte 5 Island) -->
+		<SeasonsTabs client:load seasons={seasonsData} seriesSlug={slug} />
+
+		<!-- Similar Series Rail -->
+		{similarTv.length > 0 && (
+			<HorizontalRail
+				title="📺 مسلسلات مشابهة قد تعجبك"
+				icon="🔥"
+				viewAllHref="/tv"
+			>
+				{similarTv.map((simSeries) => (
+					<MediaCard
+						title={simSeries.data.title}
+						slug={simSeries.id}
+						type="tv"
+						image={simSeries.data.featured_image}
+						release={simSeries.data.release}
+					/>
+				))}
+			</HorizontalRail>
+		)}
+
+		<!-- Schema.org TVSeries Structured Data -->
+		<script type="application/ld+json" set:html={JSON.stringify(tvSeriesSchema)} />
+	</div>
+</CimaLayout>

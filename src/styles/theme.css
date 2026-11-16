@@ -1,34 +1,357 @@
-/*
-  theme.css -- your theme overrides. This is the file to edit to
-  retheme the site.
+@import "tailwindcss";
 
-  Every design token lives in src/styles/tokens.css (colors, type
-  scale, spacing, layout, shadows) with its default value. Override any
-  of them here: declarations in this file are unlayered, so they always
-  beat the @layer base defaults in tokens.css.
-
-  Colors are defined with light-dark(). Overriding with a plain color
-  changes light and dark mode at once; use light-dark(<light>, <dark>)
-  to set different values per mode.
-
-  Set the three brand tokens together, as in the example below:
-  --color-on-brand defaults to near-black in dark mode.
-
-  Webfonts are loaded in astro.config.mjs (--font-body, --font-mono).
-  Swap the loaded font there; use overrides here for system fonts or a
-  separate heading face.
-
-  Example:
-
-  :root {
-    --color-brand: light-dark(#0f766e, #2dd4bf);
-    --color-brand-hover: light-dark(#115e59, #5eead4);
-    --color-on-brand: light-dark(#ffffff, #0a0a0a);
-    --font-heading: "Iowan Old Style", Georgia, serif;
-    --radius-lg: 18px;
-    --radius-xl: 24px;
-  }
-*/
-
+/* Material Design 3 Next-Gen Responsive Layout Grid & Cinema Color Tokens */
 :root {
+	color-scheme: light dark;
+
+	/* Responsive Full-Width Variables */
+	--max-content-width: 100%;
+	--grid-columns: 12;
+	--grid-gutter: 1.25rem;
+	--grid-margin: 1rem;
+
+	/* EmDash Official Dark Mode Guide convention using light-dark() */
+	/* Palette derived from Ma3ak Cinema Neon Cyan artwork */
+	--color-bg: light-dark(#f8fafc, #060810);
+	--color-surface: light-dark(#ffffff, #0d1222);
+	--color-fill: light-dark(#f1f5f9, #131b31);
+	--color-fill-strong: light-dark(#e2e8f0, #1b2645);
+	--color-text: light-dark(#0f172a, #ffffff);
+	--color-text-secondary: light-dark(#334155, #cbd5e1);
+	--color-muted: light-dark(#475569, #94a3b8);
+	--color-border: light-dark(#e2e8f0, #1e293b);
+	--color-border-subtle: light-dark(#f1f5f9, #151d33);
+	--color-border-strong: light-dark(#cbd5e1, #2b3959);
+
+	/* MD3 Surface Elevation Levels */
+	--md-sys-color-surface: light-dark(#ffffff, #060810);
+	--md-sys-color-surface-container-low: light-dark(#f8fafc, #0a0e1c);
+	--md-sys-color-surface-container: light-dark(#f1f5f9, #0f1426);
+	--md-sys-color-surface-container-high: light-dark(#e2e8f0, #161e38);
+	--md-sys-color-surface-container-highest: light-dark(#cbd5e1, #1e294b);
+
+	/* Ma3ak Cinema Electric Cyan Brand Tokens (Inspired by Artwork) */
+	--color-brand: light-dark(#0284c7, #00e5ff);
+	--color-brand-hover: light-dark(#0369a1, #38bdf8);
+	--color-on-brand: light-dark(#ffffff, #001524);
+	--color-brand-ring: rgba(0, 229, 255, 0.4);
+	--color-brand-glow: 0 0 20px rgba(0, 229, 255, 0.35);
+	--color-accent-gold: #f5c518;
+
+	/* Fonts: Arabic First */
+	--font-body: var(--font-arabic, "Cairo", system-ui, sans-serif);
+	--font-heading: var(--font-arabic, "Cairo", system-ui, sans-serif);
+
+	/* Smooth transitions */
+	--transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (min-width: 640px) {
+	:root {
+		--grid-margin: 1.5rem;
+	}
+}
+
+@media (min-width: 1024px) {
+	:root {
+		--grid-margin: 2.25rem;
+	}
+}
+
+@media (min-width: 1536px) {
+	:root {
+		--grid-margin: 3.5rem;
+	}
+}
+
+/* Explicit theme class pins as per EmDash dark-mode guide with optimal light/dark contrast */
+:root.light {
+	color-scheme: light;
+	--color-bg: #f8fafc;
+	--color-surface: #ffffff;
+	--color-fill: #f1f5f9;
+	--color-fill-strong: #e2e8f0;
+	--color-text: #0f172a;
+	--color-text-secondary: #334155;
+	--color-muted: #475569;
+	--color-border: #e2e8f0;
+	--color-border-subtle: #f8fafc;
+	--color-border-strong: #cbd5e1;
+	--color-brand: #0284c7;
+	--color-brand-hover: #0369a1;
+	--color-on-brand: #ffffff;
+	--color-brand-glow: 0 0 15px rgba(2, 132, 199, 0.25);
+}
+
+:root.dark {
+	color-scheme: dark;
+	--color-bg: #060810;
+	--color-surface: #0d1222;
+	--color-fill: #131b31;
+	--color-fill-strong: #1b2645;
+	--color-text: #ffffff;
+	--color-text-secondary: #cbd5e1;
+	--color-muted: #94a3b8;
+	--color-border: #1e293b;
+	--color-border-subtle: #151d33;
+	--color-border-strong: #2b3959;
+	--color-brand: #00e5ff;
+	--color-brand-hover: #38bdf8;
+	--color-on-brand: #001524;
+	--color-brand-glow: 0 0 20px rgba(0, 229, 255, 0.35);
+}
+
+.text-muted {
+	color: var(--color-muted) !important;
+}
+
+/* EmDash Dark image variants handling */
+:root.dark .emdash-image--light,
+:root.light .emdash-image--dark {
+	display: none !important;
+}
+:root.dark .emdash-image--dark,
+:root.light .emdash-image--light {
+	display: block !important;
+}
+
+/* Base Body Styles */
+html {
+	direction: rtl;
+	text-align: right;
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	font-family: var(--font-body);
+	scroll-behavior: smooth;
+	transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	overflow-x: hidden;
+	background-color: var(--color-bg);
+	color: var(--color-text);
+}
+
+/* Full-Width Next-Gen Responsive Grid Container */
+.md3-container {
+	width: 100%;
+	max-width: 100%;
+	margin-left: auto;
+	margin-right: auto;
+	padding-left: var(--grid-margin);
+	padding-right: var(--grid-margin);
+}
+
+/* 12-Column Responsive Grid System */
+.md3-grid {
+	display: grid;
+	grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+	gap: var(--grid-gutter);
+}
+
+/* Media Card Grid Responsive - Full Width Optimized */
+.media-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.875rem;
+}
+
+@media (min-width: 640px) {
+	.media-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 1.125rem;
+	}
+}
+
+@media (min-width: 768px) {
+	.media-grid {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 1.25rem;
+	}
+}
+
+@media (min-width: 1024px) {
+	.media-grid {
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 1280px) {
+	.media-grid {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 1536px) {
+	.media-grid {
+		grid-template-columns: repeat(7, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 1920px) {
+	.media-grid {
+		grid-template-columns: repeat(8, minmax(0, 1fr));
+	}
+}
+
+/* Skeleton Shimmer Animation (Material Design 3) */
+@keyframes md3-shimmer {
+	0% {
+		background-position: -200% 0;
+	}
+	100% {
+		background-position: 200% 0;
+	}
+}
+
+.skeleton-shimmer {
+	background: linear-gradient(
+		90deg,
+		var(--color-fill) 25%,
+		var(--color-fill-strong) 50%,
+		var(--color-fill) 75%
+	);
+	background-size: 200% 100%;
+	animation: md3-shimmer 1.8s infinite;
+}
+
+/* Video Player Container */
+.video-player-container {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	background-color: #000;
+	border-radius: 1rem;
+	overflow: hidden;
+	border: 1px solid var(--color-border);
+	box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4), var(--color-brand-glow);
+}
+
+.video-player-container video-player,
+.video-player-container video-skin {
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+.video-player-container video {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+/* EmDash Comments Component Theming & RTL Protection */
+.comments-container {
+	position: relative;
+	overflow: clip;
+}
+
+.comments-container .ec-comments {
+	--ec-comment-border: 1px solid var(--color-border);
+	--ec-comment-gap: 1.5rem;
+	--ec-comment-indent: 1.25rem;
+}
+
+.comments-container .ec-comments-heading {
+	font-size: 1.25rem;
+	font-weight: 700;
+	margin-bottom: 1.5rem;
+	color: var(--color-text);
+}
+
+.comments-container .ec-comment {
+	padding: 1rem 0;
+	border-bottom: 1px solid var(--color-border);
+}
+
+.comments-container .ec-comment-header {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem 0.75rem;
+	margin-bottom: 0.5rem;
+}
+
+.comments-container .ec-comment-author {
+	font-size: 0.875rem;
+	font-weight: 700;
+	color: var(--color-text);
+}
+
+.comments-container .ec-comment-date {
+	color: var(--color-muted);
+	font-size: 0.75rem;
+}
+
+.comments-container .ec-comment-body {
+	line-height: 1.7;
+	color: var(--color-text-secondary);
+	font-size: 0.925rem;
+}
+
+.comments-container .ec-comment-replies {
+	padding-inline-start: 1.25rem;
+	border-inline-start: 2px solid var(--color-border);
+	margin-top: 1rem;
+}
+
+.comments-container .ec-comment-form {
+	position: relative;
+	overflow: clip;
+	margin-top: 1.5rem;
+	padding: 1.5rem;
+	border-radius: 1rem;
+	background: var(--color-fill);
+	border: 1px solid var(--color-border);
+}
+
+.comments-container .ec-comment-form-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+	margin-bottom: 1rem;
+}
+
+.comments-container .ec-comment-form-field span {
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--color-text);
+}
+
+.comments-container .ec-comment-form input,
+.comments-container .ec-comment-form textarea {
+	padding: 0.625rem 0.875rem;
+	border: 1px solid var(--color-border);
+	border-radius: 0.625rem;
+	background: var(--color-surface);
+	color: var(--color-text);
+	font-size: 0.925rem;
+	transition: var(--transition-smooth);
+}
+
+.comments-container .ec-comment-form input:focus,
+.comments-container .ec-comment-form textarea:focus {
+	outline: none;
+	border-color: var(--color-brand);
+	box-shadow: 0 0 0 2px var(--color-brand-ring);
+}
+
+.comments-container .ec-comment-form button[type="submit"],
+.comments-container .ec-comment-form .ec-comment-submit {
+	background: var(--color-brand);
+	color: var(--color-on-brand);
+	padding: 0.625rem 1.5rem;
+	font-weight: 700;
+	font-size: 0.875rem;
+	border-radius: 0.625rem;
+	border: none;
+	cursor: pointer;
+	transition: var(--transition-smooth);
+}
+
+.comments-container .ec-comment-form button[type="submit"]:hover,
+.comments-container .ec-comment-form .ec-comment-submit:hover {
+	background: var(--color-brand-hover);
 }

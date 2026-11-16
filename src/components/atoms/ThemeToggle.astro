@@ -1,0 +1,89 @@
+---
+// ThemeToggle.astro - High-Performance, Zero-Hydration-Framework Theme Switcher
+// Fully compliant with EmDash Dark Mode Guide (https://docs.emdashcms.com/guides/dark-mode/)
+---
+
+<button
+	id="theme-toggle-btn"
+	type="button"
+	class="p-2 rounded-lg text-muted hover:text-text hover:bg-fill transition-colors focus:outline-none focus:ring-2 focus:ring-brand/40"
+	aria-label="تبديل الوضع الليلي / النهاري"
+	title="تبديل المظهر"
+>
+	<!-- Sun Icon (shown in dark mode) -->
+	<svg
+		id="theme-sun-icon"
+		class="w-5 h-5 hidden"
+		fill="none"
+		viewBox="0 0 24 24"
+		stroke="currentColor"
+		stroke-width="2"
+	>
+		<path
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+		/>
+	</svg>
+
+	<!-- Moon Icon (shown in light mode) -->
+	<svg
+		id="theme-moon-icon"
+		class="w-5 h-5 hidden"
+		fill="none"
+		viewBox="0 0 24 24"
+		stroke="currentColor"
+		stroke-width="2"
+	>
+		<path
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+		/>
+	</svg>
+</button>
+
+<script is:inline>
+	(function () {
+		var btn = document.getElementById("theme-toggle-btn");
+		var sunIcon = document.getElementById("theme-sun-icon");
+		var moonIcon = document.getElementById("theme-moon-icon");
+
+		function isDark() {
+			var root = document.documentElement;
+			if (root.classList.contains("dark")) return true;
+			if (root.classList.contains("light")) return false;
+			return window.matchMedia("(prefers-color-scheme: dark)").matches;
+		}
+
+		function updateIcons() {
+			var dark = isDark();
+			if (sunIcon && moonIcon) {
+				if (dark) {
+					sunIcon.classList.remove("hidden");
+					moonIcon.classList.add("hidden");
+				} else {
+					moonIcon.classList.remove("hidden");
+					sunIcon.classList.add("hidden");
+				}
+			}
+		}
+
+		updateIcons();
+
+		if (btn) {
+			btn.addEventListener("click", function () {
+				var dark = isDark();
+				var nextTheme = dark ? "light" : "dark";
+				var root = document.documentElement;
+
+				root.classList.remove("dark", "light");
+				root.classList.add(nextTheme);
+
+				// Store cookie as specified by EmDash Dark Mode Guide
+				document.cookie = "theme=" + nextTheme + ";path=/;max-age=31536000;SameSite=Lax";
+				updateIcons();
+			});
+		}
+	})();
+</script>

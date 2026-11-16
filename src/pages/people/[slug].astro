@@ -1,0 +1,306 @@
+---
+import CimaLayout from "../../layouts/CimaLayout.astro";
+import Breadcrumbs from "../../components/molecules/Breadcrumbs.astro";
+import MediaCard from "../../components/molecules/MediaCard.astro";
+import { getEmDashEntry, getEmDashCollection } from "emdash";
+import seedData from "../../../seed/seed.json";
+
+const { slug } = Astro.params;
+if (!slug) {
+	return Astro.redirect("/people");
+}
+
+let personEntry: any = null;
+let directedMovies: any[] = [];
+let actedMovies: any[] = [];
+let directedTv: any[] = [];
+let actedTv: any[] = [];
+
+try {
+	const [personRes, allMoviesRes, allTvRes] = await Promise.all([
+		getEmDashEntry("people", slug, {
+			references: {
+				director_movies: true,
+				peoples_movies: true,
+				director_tv: true,
+				peoples_tv: true,
+			},
+		}).catch(() => getEmDashEntry("people", slug)),
+		getEmDashCollection("movies", { limit: 100 }),
+		getEmDashCollection("tv", { limit: 100 }),
+	]);
+
+	personEntry = personRes.entry;
+
+	// Fallback to seed if not in database yet
+	if (!personEntry) {
+		const seedPerson = seedData?.content?.people?.find((p: any) => p.slug === slug || p.id === slug);
+		if (seedPerson) {
+			personEntry = {
+				id: seedPerson.slug,
+				data: { id: seedPerson.id, ...seedPerson.data }
+			};
+		}
+	}
+
+	let allMovies: any[] = [...(allMoviesRes.entries || [])];
+	let allTv: any[] = [...(allTvRes.entries || [])];
+
+	// Merge seed movies & tv to guarantee complete relation coverage
+	const seedMovies: any[] = seedData?.content?.movies || [];
+	for (const sm of seedMovies) {
+		const existingIdx = allMovies.findIndex((m: any) => m.id === sm.slug || m.id === sm.id);
+		if (existingIdx >= 0) {
+			allMovies[existingIdx] = {
+				...allMovies[existingIdx],
+				data: {
+					...allMovies[existingIdx].data,
+					director: allMovies[existingIdx].data?.director || sm.data?.director,
+					peoples: allMovies[existingIdx].data?.peoples || sm.data?.peoples,
+				}
+			};
+		} else {
+			allMovies.push({
+				id: sm.slug,
+				data: { id: sm.id, ...sm.data }
+			});
+		}
+	}
+
+	const seedTv: any[] = seedData?.content?.tv || [];
+	for (const st of seedTv) {
+		const existingIdx = allTv.findIndex((t: any) => t.id === st.slug || t.id === st.id);
+		if (existingIdx >= 0) {
+			allTv[existingIdx] = {
+				...allTv[existingIdx],
+				data: {
+					...allTv[existingIdx].data,
+					director: allTv[existingIdx].data?.director || st.data?.director,
+					peoples: allTv[existingIdx].data?.peoples || st.data?.peoples,
+				}
+			};
+		} else {
+			allTv.push({
+				id: st.slug,
+				data: { id: st.id, ...st.data }
+			});
+		}
+	}
+
+	if (personEntry) {
+		// 1. Official EmDash References API resolution
+		if (personEntry.references?.director_movies?.entries?.length) {
+			directedMovies = personEntry.references.director_movies.entries;
+		}
+		if (personEntry.references?.peoples_movies?.entries?.length) {
+			actedMovies = personEntry.references.peoples_movies.entries;
+		}
+		if (personEntry.references?.director_tv?.entries?.length) {
+			directedTv = personEntry.references.director_tv.entries;
+		}
+		if (personEntry.references?.peoples_tv?.entries?.length) {
+			actedTv = personEntry.references.peoples_tv.entries;
+		}
+
+		// 2. Fallback resolution for reverse relations
+		const pDbId = personEntry.data.id;
+		const pSlug = personEntry.id || slug;
+
+		const isPersonRef = (ref: any) => {
+			if (!ref) return false;
+			if (ref === pDbId || ref === pSlug) return true;
+			if (typeof ref === "string") {
+				const clean = ref.replace(/^\$ref:person-/, "").replace(/^-/, "");
+				return clean === pSlug || ref.includes(pSlug) || (pDbId && ref.includes(pDbId));
+			}
+			return false;
+		};
+
+		// Directed Movies Fallback
+		if (directedMovies.length === 0) {
+			directedMovies = allMovies.filter((m: any) => isPersonRef(m.data.director));
+		}
+
+		// Acted Movies Fallback
+		if (actedMovies.length === 0) {
+			actedMovies = allMovies.filter((m: any) => {
+				const p = m.data.peoples;
+				const isMatch = Array.isArray(p) ? p.some(isPersonRef) : isPersonRef(p);
+				return isMatch && !directedMovies.some((dm: any) => dm.id === m.id);
+			});
+		}
+
+		// Directed TV Fallback
+		if (directedTv.length === 0) {
+			directedTv = allTv.filter((t: any) => isPersonRef(t.data.director));
+		}
+
+		// Acted TV Fallback
+		if (actedTv.length === 0) {
+			actedTv = allTv.filter((t: any) => {
+				const p = t.data.peoples;
+				const isMatch = Array.isArray(p) ? p.some(isPersonRef) : isPersonRef(p);
+				return isMatch && !directedTv.some((dt: any) => dt.id === t.id);
+			});
+		}
+	}
+} catch (e) {
+	console.error("Error fetching person details:", e);
+}
+
+if (!personEntry) {
+	return Astro.redirect("/404");
+}
+
+const person = personEntry.data;
+const totalWorks = directedMovies.length + actedMovies.length + directedTv.length + actedTv.length;
+const pageTitle = `${person.title} – قائمة الأعمال الفنية | معاك سيما`;
+---
+
+<CimaLayout
+	title={pageTitle}
+	description={`قائمة الأعمال السينمائية والتلفزيونية للفنان ${person.title}`}
+	type="article"
+	content={{ collection: "people", id: personEntry.data.id, slug }}
+>
+	<div class="md3-container pt-4">
+		<!-- Breadcrumbs -->
+		<Breadcrumbs
+			items={[
+				{ label: "طاقم العمل", href: "/people" },
+				{ label: person.title },
+			]}
+		/>
+
+		<!-- Person Header Card (الاسم فقط بدون صور ولا سيرة ذاتية) -->
+		<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 md:p-8 my-6 shadow-sm transition-colors">
+			<div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+				<div class="flex flex-col gap-1">
+					<div class="flex items-center gap-2 mb-1">
+						<span class="text-xs font-bold text-[var(--color-on-brand)] bg-[var(--color-brand)] px-2.5 py-0.5 rounded-full">
+							فنان ومبدع
+						</span>
+						<span class="text-xs text-muted">
+							{totalWorks} عمل فني متوفر
+						</span>
+					</div>
+					<h1 class="text-2xl md:text-4xl font-extrabold text-[var(--color-text)] tracking-tight">
+						👤 {person.title}
+					</h1>
+				</div>
+
+				<!-- Badges for counts -->
+				<div class="flex flex-wrap items-center gap-2.5 text-xs md:text-sm">
+					{(directedMovies.length + actedMovies.length) > 0 && (
+						<span class="bg-[var(--color-fill)] text-[var(--color-text)] px-3.5 py-1.5 rounded-full border border-[var(--color-border)] font-semibold">
+							🎬 {directedMovies.length + actedMovies.length} أفلام
+						</span>
+					)}
+					{(directedTv.length + actedTv.length) > 0 && (
+						<span class="bg-[var(--color-fill)] text-[var(--color-text)] px-3.5 py-1.5 rounded-full border border-[var(--color-border)] font-semibold">
+							📺 {directedTv.length + actedTv.length} مسلسلات
+						</span>
+					)}
+				</div>
+			</div>
+		</div>
+
+		<!-- 1. Movies Directed (أفلام من إخراجه) -->
+		{directedMovies.length > 0 && (
+			<section class="mb-12">
+				<div class="flex items-center gap-2 mb-4">
+					<h2 class="text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
+						<span>🎬</span>
+						<span>أفلام من إخراج {person.title}</span>
+					</h2>
+					<span class="text-xs text-muted">({directedMovies.length})</span>
+				</div>
+				<div class="media-grid">
+					{directedMovies.map((m) => (
+						<MediaCard
+							title={m.data.title}
+							slug={m.id}
+							type="movie"
+							image={m.data.featured_image}
+							release={m.data.release}
+							duration={m.data.duration}
+						/>
+					))}
+				</div>
+			</section>
+		)}
+
+		<!-- 2. Movies Acted (أفلام شارك فيها بالتمثيل) -->
+		{actedMovies.length > 0 && (
+			<section class="mb-12">
+				<div class="flex items-center gap-2 mb-4">
+					<h2 class="text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
+						<span>🌟</span>
+						<span>أفلام شارك في بطولتها {person.title}</span>
+					</h2>
+					<span class="text-xs text-muted">({actedMovies.length})</span>
+				</div>
+				<div class="media-grid">
+					{actedMovies.map((m) => (
+						<MediaCard
+							title={m.data.title}
+							slug={m.id}
+							type="movie"
+							image={m.data.featured_image}
+							release={m.data.release}
+							duration={m.data.duration}
+						/>
+					))}
+				</div>
+			</section>
+		)}
+
+		<!-- 3. TV Series Directed (مسلسلات من إخراجه) -->
+		{directedTv.length > 0 && (
+			<section class="mb-12">
+				<div class="flex items-center gap-2 mb-4">
+					<h2 class="text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
+						<span>📺</span>
+						<span>مسلسلات من إخراج {person.title}</span>
+					</h2>
+					<span class="text-xs text-muted">({directedTv.length})</span>
+				</div>
+				<div class="media-grid">
+					{directedTv.map((t) => (
+						<MediaCard
+							title={t.data.title}
+							slug={t.id}
+							type="tv"
+							image={t.data.featured_image}
+							release={t.data.release}
+						/>
+					))}
+				</div>
+			</section>
+		)}
+
+		<!-- 4. TV Series Acted (مسلسلات شارك فيها بالتمثيل) -->
+		{actedTv.length > 0 && (
+			<section class="mb-12">
+				<div class="flex items-center gap-2 mb-4">
+					<h2 class="text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
+						<span>⚡</span>
+						<span>مسلسلات شارك فيها {person.title}</span>
+					</h2>
+					<span class="text-xs text-muted">({actedTv.length})</span>
+				</div>
+				<div class="media-grid">
+					{actedTv.map((t) => (
+						<MediaCard
+							title={t.data.title}
+							slug={t.id}
+							type="tv"
+							image={t.data.featured_image}
+							release={t.data.release}
+						/>
+					))}
+				</div>
+			</section>
+		)}
+	</div>
+</CimaLayout>

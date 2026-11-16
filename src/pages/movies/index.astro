@@ -1,0 +1,69 @@
+---
+import CimaLayout from "../../layouts/CimaLayout.astro";
+import MediaCard from "../../components/molecules/MediaCard.astro";
+import Chip from "../../components/atoms/Chip.astro";
+import Breadcrumbs from "../../components/molecules/Breadcrumbs.astro";
+import { getEmDashCollection, getTaxonomyTerms } from "emdash";
+
+const [moviesRes, mGenresRes] = await Promise.all([
+	getEmDashCollection("movies", { limit: 50, orderBy: { created_at: "desc" } }),
+	getTaxonomyTerms("movie_genre").catch(() => getTaxonomyTerms("genre")),
+]);
+
+const movies = moviesRes.entries || [];
+const movieGenres = mGenresRes || [];
+---
+
+<CimaLayout
+	title="دليل الأفلام الرئيسي | معاك سيما"
+	description="تصفح وشاهد أحدث الأفلام العربية والأجنبية المترجمة بجودة عالية Full HD 1080p."
+>
+	<div class="md3-container pt-4">
+		<!-- Breadcrumbs -->
+		<Breadcrumbs items={[{ label: "الأفلام" }]} />
+
+		<!-- Header -->
+		<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 my-6">
+			<div>
+				<h1 class="text-2xl md:text-3xl font-extrabold text-[var(--color-text)] flex items-center gap-2">
+					<span>🎬</span>
+					<span>دليل الأفلام الرئيسي</span>
+				</h1>
+				<p class="text-muted text-sm mt-1">
+					أحدث الأفلام العربية والعالمية المترجمة بجودات متعددة وسيرفرات مشاهدة مباشرة
+				</p>
+			</div>
+
+			<span class="text-xs text-muted bg-[var(--color-surface)] px-3 py-1.5 rounded-full border border-[var(--color-border)] self-start md:self-auto">
+				إجمالي الأفلام: {movies.length}
+			</span>
+		</div>
+
+		<!-- Movie Sections & Genres Filter Chips -->
+		<div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
+			<Chip href="/movies" active={true}>كل الأفلام</Chip>
+			<Chip href="/category/movies-arabic">🇪🇬 أفلام عربية</Chip>
+			<Chip href="/category/movies-foreign">🍿 أفلام أجنبية مترجمة</Chip>
+			{movieGenres.map((g: any) => (
+				<Chip href={`/movies/genre/${g.slug}`}>
+					🏷️ {g.label}
+				</Chip>
+			))}
+		</div>
+
+		<!-- Movies Responsive Grid (Minimal JS with MediaCard.astro) -->
+		<div class="media-grid mb-14">
+			{movies.map((movie, idx) => (
+				<MediaCard
+					title={movie.data.title}
+					slug={movie.id}
+					type="movie"
+					image={movie.data.featured_image}
+					release={movie.data.release}
+					duration={movie.data.duration}
+					priority={idx < 4}
+				/>
+			))}
+		</div>
+	</div>
+</CimaLayout>

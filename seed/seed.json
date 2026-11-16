@@ -1,940 +1,1370 @@
 {
-	"$schema": "https://emdashcms.com/seed.schema.json",
-	"version": "1",
-	"meta": {
-		"name": "Blog Starter",
-		"description": "A blog with posts and pages",
-		"author": "EmDash"
-	},
-	"settings": {
-		"title": "My Blog",
-		"tagline": "Thoughts on building for the web"
-	},
-	"collections": [
-		{
-			"slug": "posts",
-			"label": "Posts",
-			"labelSingular": "Post",
-			"urlPattern": "/posts/{slug}",
-			"supports": ["drafts", "revisions", "preview", "scheduling", "search", "seo"],
-			"commentsEnabled": true,
-			"fields": [
-				{
-					"slug": "title",
-					"label": "Title",
-					"type": "string",
-					"required": true,
-					"searchable": true
-				},
-				{
-					"slug": "featured_image",
-					"label": "Featured Image",
-					"type": "image"
-				},
-				{
-					"slug": "content",
-					"label": "Content",
-					"type": "portableText",
-					"searchable": true
-				},
-				{
-					"slug": "excerpt",
-					"label": "Excerpt",
-					"type": "text"
-				}
-			]
-		},
-		{
-			"slug": "pages",
-			"label": "Pages",
-			"labelSingular": "Page",
-			"urlPattern": "/pages/{slug}",
-			"supports": ["drafts", "revisions", "preview", "search", "seo"],
-			"fields": [
-				{
-					"slug": "title",
-					"label": "Title",
-					"type": "string",
-					"required": true,
-					"searchable": true
-				},
-				{
-					"slug": "content",
-					"label": "Content",
-					"type": "portableText",
-					"searchable": true
-				}
-			]
-		}
-	],
-	"taxonomies": [
-		{
-			"name": "category",
-			"label": "Categories",
-			"labelSingular": "Category",
-			"hierarchical": true,
-			"collections": ["posts"],
-			"terms": [
-				{
-					"slug": "development",
-					"label": "Development"
-				},
-				{
-					"slug": "design",
-					"label": "Design"
-				},
-				{
-					"slug": "notes",
-					"label": "Notes"
-				}
-			]
-		},
-		{
-			"name": "tag",
-			"label": "Tags",
-			"labelSingular": "Tag",
-			"hierarchical": false,
-			"collections": ["posts"],
-			"terms": [
-				{
-					"slug": "webdev",
-					"label": "Web Development"
-				},
-				{
-					"slug": "opinion",
-					"label": "Opinion"
-				},
-				{
-					"slug": "tools",
-					"label": "Tools"
-				},
-				{
-					"slug": "creativity",
-					"label": "Creativity"
-				}
-			]
-		}
-	],
-	"bylines": [
-		{
-			"id": "byline-editorial",
-			"slug": "emdash-editorial",
-			"displayName": "EmDash Editorial"
-		},
-		{
-			"id": "byline-guest",
-			"slug": "guest-contributor",
-			"displayName": "Guest Contributor",
-			"isGuest": true
-		}
-	],
-	"menus": [
-		{
-			"name": "primary",
-			"label": "Primary Navigation",
-			"items": [
-				{
-					"type": "custom",
-					"label": "Home",
-					"url": "/"
-				},
-				{
-					"type": "custom",
-					"label": "About",
-					"url": "/pages/about"
-				},
-				{
-					"type": "custom",
-					"label": "Posts",
-					"url": "/posts"
-				}
-			]
-		}
-	],
-	"widgetAreas": [
-		{
-			"name": "sidebar",
-			"label": "Sidebar",
-			"description": "Widget area displayed on single post pages",
-			"widgets": [
-				{
-					"type": "component",
-					"componentId": "core:search",
-					"title": "Search"
-				},
-				{
-					"type": "component",
-					"componentId": "core:categories",
-					"title": "Categories"
-				},
-				{
-					"type": "component",
-					"componentId": "core:tags",
-					"title": "Tags"
-				},
-				{
-					"type": "component",
-					"componentId": "core:recent-posts",
-					"title": "Recent Posts",
-					"props": {
-						"count": 5,
-						"showDate": true
-					}
-				},
-				{
-					"type": "component",
-					"componentId": "core:archives",
-					"title": "Archives",
-					"props": {
-						"type": "monthly",
-						"limit": 6
-					}
-				}
-			]
-		},
-		{
-			"name": "footer",
-			"label": "Footer",
-			"description": "Widget area displayed in the site footer",
-			"widgets": [
-				{
-					"type": "content",
-					"title": "About",
-					"content": [
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "A blog about software, design, and the occasional stray thought.",
-									"_key": "k1"
-								}
-							],
-							"_key": "k0"
-						}
-					]
-				}
-			]
-		}
-	],
-	"sections": [
-		{
-			"slug": "newsletter-signup",
-			"title": "Newsletter Signup",
-			"description": "A call-to-action block for newsletter subscriptions",
-			"keywords": ["newsletter", "subscribe", "email", "cta"],
-			"source": "theme",
-			"content": [
-				{
-					"_type": "block",
-					"style": "h3",
-					"children": [
-						{
-							"_type": "span",
-							"text": "Stay in the loop",
-							"_key": "k1"
-						}
-					],
-					"_key": "k0"
-				},
-				{
-					"_type": "block",
-					"style": "normal",
-					"children": [
-						{
-							"_type": "span",
-							"text": "Get notified when new posts are published. No spam, unsubscribe anytime.",
-							"_key": "k3"
-						}
-					],
-					"_key": "k2"
-				}
-			]
-		},
-		{
-			"slug": "about-author",
-			"title": "About the Author",
-			"description": "Brief author bio for use in posts or pages",
-			"keywords": ["author", "bio", "about"],
-			"source": "theme",
-			"content": [
-				{
-					"_type": "block",
-					"style": "normal",
-					"children": [
-						{
-							"_type": "span",
-							"text": "A software developer who writes about building things on the web. Based somewhere with good coffee and reliable internet.",
-							"_key": "k1"
-						}
-					],
-					"_key": "k0"
-				}
-			]
-		}
-	],
-	"content": {
-		"pages": [
-			{
-				"id": "about",
-				"slug": "about",
-				"status": "published",
-				"data": {
-					"title": "About",
-					"content": [
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "A place for writing about software, design, and the occasional stray thought. No posting schedule, no newsletter funnel. Just things I wanted to write down.",
-									"_key": "k1"
-								}
-							],
-							"_key": "k0"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "Built with Astro and EmDash. The source is open if you want to see how it works.",
-									"_key": "k3"
-								}
-							],
-							"_key": "k2"
-						}
-					]
-				}
-			}
-		],
-		"posts": [
-			{
-				"id": "post-1",
-				"slug": "building-for-the-long-term",
-				"status": "published",
-				"data": {
-					"title": "Building for the Long Term",
-					"excerpt": "The frameworks will change. The databases will change. What survives is the clarity of your thinking.",
-					"featured_image": {
-						"$media": {
-							"url": "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1200&h=800&fit=crop",
-							"alt": "Code on a monitor in a dark room",
-							"filename": "building-long-term.jpg"
-						}
-					},
-					"content": [
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "Every few years the industry collectively decides that everything we've been doing is wrong and there's a better way. New frameworks, new paradigms, new build tools. The churn is relentless, and if you're not careful, you spend more time migrating than building.",
-									"_key": "k1"
-								}
-							],
-							"_key": "k0"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "I've been writing software long enough to have seen several of these cycles. jQuery to Backbone to Angular to React to whatever comes next. Each transition felt urgent at the time. Looking back, the things that actually mattered were rarely about the framework.",
-									"_key": "k3"
-								}
-							],
-							"_key": "k2"
-						},
-						{
-							"_type": "block",
-							"style": "h2",
-							"children": [
-								{
-									"_type": "span",
-									"text": "What survives",
-									"_key": "k5"
-								}
-							],
-							"_key": "k4"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "Clean data models survive. Clear boundaries between systems survive. Good naming survives. The decision to keep things simple when you could have made them clever - that definitely survives.",
-									"_key": "k7"
-								}
-							],
-							"_key": "k6"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "What doesn't survive is code that was written to impress, abstractions built for problems that never materialized, and architectures designed around a framework's opinions rather than the domain's reality.",
-									"_key": "k9"
-								}
-							],
-							"_key": "k8"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "The best code I've written is boring. It reads like prose, does one thing well, and doesn't require a PhD in category theory to understand. The worst code I've written was technically impressive at the time.",
-									"_key": "k11"
-								}
-							],
-							"_key": "k10"
-						}
-					]
-				},
-				"bylines": [
-					{
-						"byline": "byline-editorial"
-					},
-					{
-						"byline": "byline-guest",
-						"roleLabel": "Guest essay"
-					}
-				],
-				"taxonomies": {
-					"category": ["development"],
-					"tag": ["opinion"]
-				}
-			},
-			{
-				"id": "post-2",
-				"slug": "the-case-for-static",
-				"status": "published",
-				"data": {
-					"title": "The Case for Static",
-					"excerpt": "Static sites aren't a step backwards. They're what you get when you take performance and simplicity seriously.",
-					"featured_image": {
-						"$media": {
-							"url": "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200&h=800&fit=crop",
-							"alt": "Laptop and coffee on a wooden table",
-							"filename": "case-for-static.jpg"
-						}
-					},
-					"content": [
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "There's a certain irony in the fact that the web started static, went dynamic, and is now swinging back toward static again. But the static sites of today aren't the hand-coded HTML pages of 1998. They're generated, optimized, and deployed to edge networks that serve them in milliseconds.",
-									"_key": "k1"
-								}
-							],
-							"_key": "k0"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "The pitch for server-rendered everything was compelling: dynamic content, personalization, real-time data. But most sites don't need most of that most of the time. A blog post doesn't need to be rendered on every request. A product page doesn't change every second.",
-									"_key": "k3"
-								}
-							],
-							"_key": "k2"
-						},
-						{
-							"_type": "block",
-							"style": "h2",
-							"children": [
-								{
-									"_type": "span",
-									"text": "The performance argument",
-									"_key": "k5"
-								}
-							],
-							"_key": "k4"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "A static file served from a CDN is as fast as the web gets. No cold starts, no database queries, no server-side rendering overhead. The Time to First Byte is essentially the network latency to your nearest edge node. You can't beat physics.",
-									"_key": "k7"
-								}
-							],
-							"_key": "k6"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "And when you do need dynamic behavior, you can add it surgically. An island of interactivity in a sea of static HTML. The best of both worlds, without paying the cost of either at all times.",
-									"_key": "k9"
-								}
-							],
-							"_key": "k8"
-						}
-					]
-				},
-				"bylines": [
-					{
-						"byline": "byline-editorial"
-					}
-				],
-				"taxonomies": {
-					"category": ["development"],
-					"tag": ["webdev", "opinion"]
-				}
-			},
-			{
-				"id": "post-3",
-				"slug": "learning-in-public",
-				"status": "published",
-				"data": {
-					"title": "Learning in Public",
-					"excerpt": "Writing about what you're learning is the fastest way to find out what you don't actually understand.",
-					"featured_image": {
-						"$media": {
-							"url": "https://images.unsplash.com/photo-1432821596592-e2c18b78144f?w=1200&h=800&fit=crop",
-							"alt": "Notebook and pen on a desk",
-							"filename": "learning-in-public.jpg"
-						}
-					},
-					"content": [
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "I started writing about things I was learning not because I had anything original to say, but because I kept forgetting what I'd figured out. The blog posts were notes to my future self, published publicly more out of laziness than courage.",
-									"_key": "k1"
-								}
-							],
-							"_key": "k0"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "What I didn't expect was how much the writing itself would accelerate the learning. There's a particular kind of clarity that comes from trying to explain something to someone else. The gaps in your understanding, which you can happily ignore when the knowledge lives only in your head, become painfully obvious when you try to put it into sentences.",
-									"_key": "k3"
-								}
-							],
-							"_key": "k2"
-						},
-						{
-							"_type": "block",
-							"style": "h2",
-							"children": [
-								{
-									"_type": "span",
-									"text": "The fear of being wrong",
-									"_key": "k5"
-								}
-							],
-							"_key": "k4"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "The biggest barrier isn't time or writing skill. It's the fear of publishing something that turns out to be wrong. But here's the thing: being wrong publicly is one of the most efficient ways to learn. Someone will correct you, often kindly, and you'll remember that correction forever.",
-									"_key": "k7"
-								}
-							],
-							"_key": "k6"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "The posts that helped me most weren't written by experts. They were written by people one step ahead of me on the same path, in language that hadn't yet been polished into abstraction. There's a place for that kind of writing, and it's more valuable than most people realize.",
-									"_key": "k9"
-								}
-							],
-							"_key": "k8"
-						}
-					]
-				},
-				"taxonomies": {
-					"category": ["notes"],
-					"tag": ["opinion"]
-				}
-			},
-			{
-				"id": "post-4",
-				"slug": "small-tools-big-impact",
-				"status": "published",
-				"data": {
-					"title": "Small Tools, Big Impact",
-					"excerpt": "The best developer tools do one thing well and get out of your way. A love letter to focused software.",
-					"featured_image": {
-						"$media": {
-							"url": "https://images.unsplash.com/photo-1575026615908-666710ae5e47?w=1200&h=800&fit=crop",
-							"alt": "Wrenches and hand tools hanging on a workshop wall",
-							"filename": "small-tools.jpg"
-						}
-					},
-					"content": [
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "There's a class of software that doesn't get enough appreciation. Not the frameworks or the platforms or the IDEs, but the small, sharp tools that solve one problem so well you stop thinking about them. They become invisible, which is the highest compliment you can pay a tool.",
-									"_key": "k1"
-								}
-							],
-							"_key": "k0"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "I'm talking about things like ripgrep, which searches code so fast it changed how I think about searching. Or jq, which makes JSON feel like a first-class data format in the terminal. Or curl, which has been quietly powering the internet's plumbing for decades.",
-									"_key": "k3"
-								}
-							],
-							"_key": "k2"
-						},
-						{
-							"_type": "block",
-							"style": "h2",
-							"children": [
-								{
-									"_type": "span",
-									"text": "The Unix philosophy, revisited",
-									"_key": "k5"
-								}
-							],
-							"_key": "k4"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "Do one thing well. The advice is old enough to be a cliche, but the best modern tools still follow it. They don't try to be platforms. They don't have plugin ecosystems or configuration languages or startup wizards. They do their job and they compose with other tools that do theirs.",
-									"_key": "k7"
-								}
-							],
-							"_key": "k6"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "The temptation is always to add more. One more feature, one more option, one more integration. But every addition is a decision someone has to make, a path through the code that has to be maintained, a thing that can break. The best tools resist this. They stay small, and in staying small, they stay reliable.",
-									"_key": "k9"
-								}
-							],
-							"_key": "k8"
-						}
-					]
-				},
-				"taxonomies": {
-					"category": ["development"],
-					"tag": ["tools"]
-				}
-			},
-			{
-				"id": "post-5",
-				"slug": "designing-with-constraints",
-				"status": "published",
-				"data": {
-					"title": "Designing with Constraints",
-					"excerpt": "Limitations aren't obstacles to creativity. They're the structure that makes creativity possible.",
-					"featured_image": {
-						"$media": {
-							"url": "https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=1200&h=800&fit=crop",
-							"alt": "Pencils and design tools on a desk",
-							"filename": "designing-with-constraints.jpg"
-						}
-					},
-					"content": [
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "Give a designer a blank canvas and unlimited time, and they'll often produce something mediocre. Give them a tight brief, a small screen, and a deadline, and they'll surprise you. This isn't a paradox - it's how creativity actually works.",
-									"_key": "k1"
-								}
-							],
-							"_key": "k0"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "Constraints force decisions. When you can't use more than two typefaces, you have to choose carefully. When the page has to load in under a second, every element earns its place. When the interface has to work on a 320px screen, you discover what's truly essential.",
-									"_key": "k3"
-								}
-							],
-							"_key": "k2"
-						},
-						{
-							"_type": "block",
-							"style": "h2",
-							"children": [
-								{
-									"_type": "span",
-									"text": "Embracing the box",
-									"_key": "k5"
-								}
-							],
-							"_key": "k4"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "The web itself is a constraint. HTML flows in one direction. CSS has a box model. Browsers have viewport sizes and font rendering quirks. You can fight these constraints or you can work with them, and the results are dramatically different.",
-									"_key": "k7"
-								}
-							],
-							"_key": "k6"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "The designs I admire most don't look like they were forced through a framework. They look like they grew naturally from the medium, respecting its grain rather than working against it. That only happens when you treat constraints as creative partners rather than enemies.",
-									"_key": "k9"
-								}
-							],
-							"_key": "k8"
-						}
-					]
-				},
-				"taxonomies": {
-					"category": ["design"],
-					"tag": ["creativity"]
-				}
-			},
-			{
-				"id": "post-6",
-				"slug": "a-weekend-with-a-side-project",
-				"status": "published",
-				"data": {
-					"title": "A Weekend with a Side Project",
-					"excerpt": "No stakeholders, no deadlines, no Jira tickets. Just you and a dumb idea that might turn into something.",
-					"featured_image": {
-						"$media": {
-							"url": "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=1200&h=800&fit=crop",
-							"alt": "Code on a screen with a dark theme",
-							"filename": "weekend-side-project.jpg"
-						}
-					},
-					"content": [
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "Saturday morning. Coffee's made, the house is quiet, and I've got an idea that's been nagging at me all week. Not a good idea, necessarily - just a persistent one. A small tool that does a thing I keep doing manually. How hard could it be?",
-									"_key": "k1"
-								}
-							],
-							"_key": "k0"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "This is the best kind of programming. No requirements document, no sprint planning, no pull request reviews. Just a text editor and a problem. The freedom to make terrible architectural decisions, rewrite everything twice, and follow tangents that turn out to be dead ends.",
-									"_key": "k3"
-								}
-							],
-							"_key": "k2"
-						},
-						{
-							"_type": "block",
-							"style": "h2",
-							"children": [
-								{
-									"_type": "span",
-									"text": "Why side projects matter",
-									"_key": "k5"
-								}
-							],
-							"_key": "k4"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "Side projects are where you learn things your day job would never teach you. Not because the problems are harder, but because you're free to take risks. Try a language you've never used. Build something without a framework. Deploy to a platform you've only read about. The stakes are zero, which makes the learning maximum.",
-									"_key": "k7"
-								}
-							],
-							"_key": "k6"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "By Sunday evening, the thing sort of works. It's rough, the error handling is nonexistent, and the README is a single sentence. But it solves the problem I set out to solve, and I learned three things I didn't know on Friday. Not a bad weekend.",
-									"_key": "k9"
-								}
-							],
-							"_key": "k8"
-						}
-					]
-				},
-				"taxonomies": {
-					"category": ["development"],
-					"tag": ["creativity"]
-				}
-			},
-			{
-				"id": "post-7",
-				"slug": "notes-on-simplicity",
-				"status": "published",
-				"data": {
-					"title": "Notes on Simplicity",
-					"excerpt": "Simplicity isn't the absence of complexity. It's the result of understanding a problem well enough to solve it cleanly.",
-					"featured_image": {
-						"$media": {
-							"url": "https://images.unsplash.com/photo-1559051668-e1fa58f25786?w=1200&h=800&fit=crop",
-							"alt": "Geometric pattern carved into white paper",
-							"filename": "notes-on-simplicity.jpg"
-						}
-					},
-					"content": [
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "Every piece of software starts simple. A few files, a clear purpose, a small surface area. Then features get added, edge cases get handled, and before long you're looking at something that requires a diagram to understand. This isn't inevitable, but it takes discipline to prevent.",
-									"_key": "k1"
-								}
-							],
-							"_key": "k0"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "The hard part of simplicity isn't the initial design. It's the ongoing resistance to complication. Every feature request, every bug fix, every refactor is an opportunity to add complexity. Saying no is the most important design skill, and the least celebrated.",
-									"_key": "k3"
-								}
-							],
-							"_key": "k2"
-						},
-						{
-							"_type": "block",
-							"style": "h2",
-							"children": [
-								{
-									"_type": "span",
-									"text": "Removing as a feature",
-									"_key": "k5"
-								}
-							],
-							"_key": "k4"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "The best version of a product often has fewer features than the previous one. Not because features were missing, but because someone had the courage to remove things that weren't earning their keep. Every feature has a cost - in maintenance, in cognitive load, in the weight of the interface.",
-									"_key": "k7"
-								}
-							],
-							"_key": "k6"
-						},
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "Simplicity is a practice, not a destination. You never arrive at simple. You just keep asking: is this necessary? Could this be clearer? Is there a way to solve this problem by removing something instead of adding something? The answer is yes more often than you'd expect.",
-									"_key": "k9"
-								}
-							],
-							"_key": "k8"
-						}
-					]
-				},
-				"taxonomies": {
-					"category": ["notes"],
-					"tag": ["opinion"]
-				}
-			},
-			{
-				"id": "post-draft",
-				"slug": "work-in-progress",
-				"status": "draft",
-				"data": {
-					"title": "Work in Progress",
-					"excerpt": "This post is still being written.",
-					"content": [
-						{
-							"_type": "block",
-							"style": "normal",
-							"children": [
-								{
-									"_type": "span",
-									"text": "This is a draft post that won't appear in the public listing.",
-									"_key": "k1"
-								}
-							],
-							"_key": "k0"
-						}
-					]
-				}
-			}
-		]
-	}
+  "$schema": "https://emdashcms.com/seed.schema.json",
+  "version": "1",
+  "defaultLocale": "ar",
+  "meta": {
+    "name": "معاك سيما",
+    "description": "منصة مشاهدة الأفلام والمسلسلات أونلاين بجودة عالية",
+    "author": "معاك سيما"
+  },
+  "settings": {
+    "title": "معاك سيما",
+    "tagline": "مشاهدة افلام ومسلسلات اونلاين "
+  },
+  "collections": [
+    {
+      "slug": "movies",
+      "label": "Movies",
+      "labelSingular": "Movie",
+      "urlPattern": "/movies/{slug}",
+      "supports": [
+        "drafts",
+        "revisions",
+        "search",
+        "seo"
+      ],
+      "commentsEnabled": true,
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Title",
+          "type": "string",
+          "required": true,
+          "searchable": true
+        },
+        {
+          "slug": "featured_image",
+          "label": "Featured Image",
+          "type": "image",
+          "options": {
+            "darkVariant": true
+          }
+        },
+        {
+          "slug": "release",
+          "label": "Release Year",
+          "type": "string"
+        },
+        {
+          "slug": "duration",
+          "label": "Duration (minutes)",
+          "type": "integer"
+        },
+        {
+          "slug": "excerpt",
+          "label": "Story / Synopsis",
+          "type": "text",
+          "searchable": true
+        },
+        {
+          "slug": "video",
+          "label": "Video URL",
+          "type": "url"
+        },
+        {
+          "slug": "subtitle",
+          "label": "Subtitle URL",
+          "type": "url"
+        },
+        {
+          "slug": "director",
+          "label": "Director",
+          "type": "reference",
+          "validation": {
+            "relation": "movies_director",
+            "relationSide": "parent",
+            "targetCollection": "people"
+          }
+        },
+        {
+          "slug": "peoples",
+          "label": "Cast",
+          "type": "reference",
+          "validation": {
+            "relation": "movies_peoples",
+            "relationSide": "parent",
+            "targetCollection": "people"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "tv",
+      "label": "TV Shows",
+      "labelSingular": "TV Show",
+      "urlPattern": "/tv/{slug}",
+      "supports": [
+        "drafts",
+        "revisions",
+        "search",
+        "seo"
+      ],
+      "commentsEnabled": true,
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Title",
+          "type": "string",
+          "required": true,
+          "searchable": true
+        },
+        {
+          "slug": "featured_image",
+          "label": "Featured Image",
+          "type": "image",
+          "options": {
+            "darkVariant": true
+          }
+        },
+        {
+          "slug": "release",
+          "label": "Release Year",
+          "type": "string"
+        },
+        {
+          "slug": "excerpt",
+          "label": "Synopsis",
+          "type": "text",
+          "searchable": true
+        },
+        {
+          "slug": "director",
+          "label": "Director",
+          "type": "reference",
+          "validation": {
+            "relation": "tv_director",
+            "relationSide": "parent",
+            "targetCollection": "people"
+          }
+        },
+        {
+          "slug": "peoples",
+          "label": "Cast",
+          "type": "reference",
+          "validation": {
+            "relation": "tv_peoples",
+            "relationSide": "parent",
+            "targetCollection": "people"
+          }
+        },
+        {
+          "slug": "seasons",
+          "label": "Seasons",
+          "type": "reference",
+          "validation": {
+            "relation": "tv_seasons",
+            "relationSide": "parent",
+            "targetCollection": "seasons"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "seasons",
+      "label": "Seasons",
+      "labelSingular": "Season",
+      "urlPattern": "/seasons/{slug}",
+      "supports": [
+        "drafts",
+        "revisions",
+        "search",
+        "seo"
+      ],
+      "commentsEnabled": false,
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Title",
+          "type": "string",
+          "required": true,
+          "searchable": true
+        },
+        {
+          "slug": "season_number",
+          "label": "Season Number",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "slug": "featured_image",
+          "label": "Featured Image",
+          "type": "image",
+          "options": {
+            "darkVariant": true
+          }
+        },
+        {
+          "slug": "release",
+          "label": "Release Year",
+          "type": "string"
+        },
+        {
+          "slug": "excerpt",
+          "label": "Synopsis",
+          "type": "text"
+        },
+        {
+          "slug": "tv",
+          "label": "TV Show",
+          "type": "reference",
+          "validation": {
+            "relation": "tv_seasons",
+            "relationSide": "child",
+            "targetCollection": "tv"
+          }
+        },
+        {
+          "slug": "episodes",
+          "label": "Episodes",
+          "type": "reference",
+          "validation": {
+            "relation": "seasons_episodes",
+            "relationSide": "parent",
+            "targetCollection": "episodes"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "episodes",
+      "label": "Episodes",
+      "labelSingular": "Episode",
+      "urlPattern": "/episodes/{slug}",
+      "supports": [
+        "drafts",
+        "revisions",
+        "search",
+        "seo"
+      ],
+      "commentsEnabled": true,
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Title",
+          "type": "string",
+          "required": true,
+          "searchable": true
+        },
+        {
+          "slug": "episode_number",
+          "label": "Episode Number",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "slug": "duration",
+          "label": "Duration (minutes)",
+          "type": "integer"
+        },
+        {
+          "slug": "excerpt",
+          "label": "Synopsis",
+          "type": "text"
+        },
+        {
+          "slug": "video",
+          "label": "Video URL",
+          "type": "url"
+        },
+        {
+          "slug": "subtitle",
+          "label": "Subtitle URL",
+          "type": "url"
+        },
+        {
+          "slug": "featured_image",
+          "label": "Featured Image",
+          "type": "image",
+          "options": {
+            "darkVariant": true
+          }
+        },
+        {
+          "slug": "seasons",
+          "label": "Season",
+          "type": "reference",
+          "validation": {
+            "relation": "seasons_episodes",
+            "relationSide": "child",
+            "targetCollection": "seasons"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "people",
+      "label": "Cast & Crew",
+      "labelSingular": "Person",
+      "urlPattern": "/people/{slug}",
+      "supports": [
+        "drafts",
+        "revisions",
+        "search",
+        "seo"
+      ],
+      "commentsEnabled": false,
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Full Name",
+          "type": "string",
+          "required": true,
+          "searchable": true
+        },
+        {
+          "slug": "photo",
+          "label": "Photo",
+          "type": "image",
+          "options": {
+            "darkVariant": true
+          }
+        },
+        {
+          "slug": "bio",
+          "label": "Biography",
+          "type": "text",
+          "searchable": true
+        },
+        {
+          "slug": "director_movies",
+          "label": "Directed Movies",
+          "type": "reference",
+          "validation": {
+            "relation": "movies_director",
+            "relationSide": "child",
+            "targetCollection": "movies"
+          }
+        },
+        {
+          "slug": "director_tv",
+          "label": "Directed TV Shows",
+          "type": "reference",
+          "validation": {
+            "relation": "tv_director",
+            "relationSide": "child",
+            "targetCollection": "tv"
+          }
+        },
+        {
+          "slug": "peoples_movies",
+          "label": "Acted Movies",
+          "type": "reference",
+          "validation": {
+            "relation": "movies_peoples",
+            "relationSide": "child",
+            "targetCollection": "movies"
+          }
+        },
+        {
+          "slug": "peoples_tv",
+          "label": "Acted TV Shows",
+          "type": "reference",
+          "validation": {
+            "relation": "tv_peoples",
+            "relationSide": "child",
+            "targetCollection": "tv"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "posts",
+      "label": "Posts",
+      "labelSingular": "Post",
+      "urlPattern": "/posts/{slug}",
+      "supports": [
+        "drafts",
+        "revisions",
+        "preview",
+        "scheduling",
+        "search",
+        "seo"
+      ],
+      "commentsEnabled": true,
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Title",
+          "type": "string",
+          "required": true,
+          "searchable": true
+        },
+        {
+          "slug": "featured_image",
+          "label": "Featured Image",
+          "type": "image",
+          "options": {
+            "darkVariant": true
+          }
+        },
+        {
+          "slug": "excerpt",
+          "label": "Excerpt",
+          "type": "text"
+        },
+        {
+          "slug": "content",
+          "label": "Content",
+          "type": "portableText",
+          "searchable": true
+        }
+      ]
+    },
+    {
+      "slug": "pages",
+      "label": "Pages",
+      "labelSingular": "Page",
+      "urlPattern": "/pages/{slug}",
+      "supports": [
+        "drafts",
+        "revisions",
+        "preview",
+        "search",
+        "seo"
+      ],
+      "commentsEnabled": false,
+      "fields": [
+        {
+          "slug": "title",
+          "label": "Title",
+          "type": "string",
+          "required": true,
+          "searchable": true
+        },
+        {
+          "slug": "content",
+          "label": "Content",
+          "type": "portableText",
+          "searchable": true
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "slug": "movies_peoples",
+      "parentCollection": "movies",
+      "childCollection": "people",
+      "parentLabel": "Movies",
+      "parentLabelSingular": "Movie",
+      "childLabel": "Cast",
+      "childLabelSingular": "Actor",
+      "maxChildrenPerParent": null,
+      "maxParentsPerChild": null
+    },
+    {
+      "slug": "movies_director",
+      "parentCollection": "movies",
+      "childCollection": "people",
+      "parentLabel": "Movies",
+      "parentLabelSingular": "Movie",
+      "childLabel": "Director",
+      "childLabelSingular": "Director",
+      "maxChildrenPerParent": 1,
+      "maxParentsPerChild": null
+    },
+    {
+      "slug": "tv_peoples",
+      "parentCollection": "tv",
+      "childCollection": "people",
+      "parentLabel": "TV Shows",
+      "parentLabelSingular": "TV Show",
+      "childLabel": "Cast",
+      "childLabelSingular": "Actor",
+      "maxChildrenPerParent": null,
+      "maxParentsPerChild": null
+    },
+    {
+      "slug": "tv_director",
+      "parentCollection": "tv",
+      "childCollection": "people",
+      "parentLabel": "TV Shows",
+      "parentLabelSingular": "TV Show",
+      "childLabel": "Director",
+      "childLabelSingular": "Director",
+      "maxChildrenPerParent": 1,
+      "maxParentsPerChild": null
+    },
+    {
+      "slug": "tv_seasons",
+      "parentCollection": "tv",
+      "childCollection": "seasons",
+      "parentLabel": "TV Show",
+      "parentLabelSingular": "TV Show",
+      "childLabel": "Seasons",
+      "childLabelSingular": "Season",
+      "maxChildrenPerParent": null,
+      "maxParentsPerChild": 1
+    },
+    {
+      "slug": "seasons_episodes",
+      "parentCollection": "seasons",
+      "childCollection": "episodes",
+      "parentLabel": "Season",
+      "parentLabelSingular": "Season",
+      "childLabel": "Episodes",
+      "childLabelSingular": "Episode",
+      "maxChildrenPerParent": null,
+      "maxParentsPerChild": 1
+    }
+  ],
+  "taxonomies": [
+    {
+      "name": "category",
+      "label": "Categories",
+      "labelSingular": "Category",
+      "hierarchical": false,
+      "collections": [
+        "movies",
+        "tv"
+      ],
+      "terms": [
+        {
+          "slug": "movies-arabic",
+          "label": "أفلام عربية"
+        },
+        {
+          "slug": "movies-foreign",
+          "label": "أفلام أجنبية مترجمة"
+        },
+        {
+          "slug": "series-arabic",
+          "label": "مسلسلات عربية"
+        },
+        {
+          "slug": "series-foreign",
+          "label": "مسلسلات أجنبية مترجمة"
+        }
+      ]
+    },
+    {
+      "name": "genre",
+      "label": "Genres",
+      "labelSingular": "Genre",
+      "hierarchical": false,
+      "collections": [
+        "movies",
+        "tv"
+      ],
+      "terms": [
+        {
+          "slug": "action",
+          "label": "أكشن"
+        },
+        {
+          "slug": "adventure",
+          "label": "مغامرة"
+        },
+        {
+          "slug": "drama",
+          "label": "دراما"
+        },
+        {
+          "slug": "comedy",
+          "label": "كوميديا"
+        },
+        {
+          "slug": "crime",
+          "label": "جريمة"
+        },
+        {
+          "slug": "thriller",
+          "label": "تشويق وإثارة"
+        },
+        {
+          "slug": "horror",
+          "label": "رعب"
+        },
+        {
+          "slug": "romance",
+          "label": "رومانسي"
+        },
+        {
+          "slug": "fantasy",
+          "label": "فانتازيا"
+        },
+        {
+          "slug": "mystery",
+          "label": "غموض"
+        },
+        {
+          "slug": "family",
+          "label": "عائلي"
+        },
+        {
+          "slug": "history",
+          "label": "تاريخي"
+        },
+        {
+          "slug": "war",
+          "label": "حرب"
+        }
+      ]
+    },
+    {
+      "name": "tag",
+      "label": "Tags",
+      "labelSingular": "Tag",
+      "hierarchical": false,
+      "collections": [
+        "movies",
+        "tv",
+        "posts"
+      ],
+      "terms": [
+        {
+          "slug": "cinema",
+          "label": "سينما"
+        },
+        {
+          "slug": "news",
+          "label": "أخبار الفن"
+        },
+        {
+          "slug": "box-office",
+          "label": "شباك التذاكر"
+        }
+      ]
+    },
+    {
+      "name": "movie_genre",
+      "label": "Movie Genres",
+      "labelSingular": "Movie Genre",
+      "hierarchical": false,
+      "collections": [
+        "movies"
+      ],
+      "terms": [
+        {
+          "slug": "action",
+          "label": "أكشن"
+        },
+        {
+          "slug": "adventure",
+          "label": "مغامرة"
+        },
+        {
+          "slug": "comedy",
+          "label": "كوميديا"
+        },
+        {
+          "slug": "drama",
+          "label": "دراما"
+        },
+        {
+          "slug": "thriller",
+          "label": "تشويق وإثارة"
+        },
+        {
+          "slug": "horror",
+          "label": "رعب"
+        },
+        {
+          "slug": "crime",
+          "label": "جريمة"
+        },
+        {
+          "slug": "romance",
+          "label": "رومانسي"
+        },
+        {
+          "slug": "fantasy",
+          "label": "فانتازيا"
+        },
+        {
+          "slug": "mystery",
+          "label": "غموض"
+        },
+        {
+          "slug": "family",
+          "label": "عائلي"
+        },
+        {
+          "slug": "history",
+          "label": "تاريخي"
+        },
+        {
+          "slug": "war",
+          "label": "حرب"
+        },
+        {
+          "slug": "sci-fi",
+          "label": "خيال علمي"
+        }
+      ]
+    },
+    {
+      "name": "tv_genre",
+      "label": "TV Genres",
+      "labelSingular": "TV Genre",
+      "hierarchical": false,
+      "collections": [
+        "tv"
+      ],
+      "terms": [
+        {
+          "slug": "drama",
+          "label": "دراما"
+        },
+        {
+          "slug": "thriller",
+          "label": "تشويق وإثارة"
+        },
+        {
+          "slug": "crime",
+          "label": "جريمة"
+        },
+        {
+          "slug": "comedy",
+          "label": "كوميديا"
+        },
+        {
+          "slug": "action",
+          "label": "أكشن"
+        },
+        {
+          "slug": "history",
+          "label": "تاريخي"
+        },
+        {
+          "slug": "mystery",
+          "label": "غموض"
+        },
+        {
+          "slug": "fantasy",
+          "label": "فانتازيا"
+        },
+        {
+          "slug": "family",
+          "label": "عائلي"
+        }
+      ]
+    }
+  ],
+  "menus": [
+    {
+      "name": "primary",
+      "label": "القائمة الرئيسية",
+      "items": [
+        {
+          "type": "custom",
+          "label": "الرئيسية",
+          "url": "/"
+        },
+        {
+          "type": "custom",
+          "label": "الأفلام",
+          "url": "/movies"
+        },
+        {
+          "type": "custom",
+          "label": "المسلسلات",
+          "url": "/tv"
+        }
+      ]
+    }
+  ],
+  "content": {
+    "people": [
+      {
+        "id": "person-ahmed-ezz",
+        "slug": "ahmed-ezz",
+        "status": "published",
+        "data": {
+          "title": "أحمد عز",
+          "bio": "ممثل مصري بدأ مسيرته في نهاية التسعينيات وحقق نجاحات ساحقة في شباك التذاكر العربي من خلال بطولاته لأضخم أفلام الأكشن والإثارة.",
+          "photo": {
+            "src": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop",
+            "alt": "أحمد عز"
+          }
+        }
+      },
+      {
+        "id": "person-tarek-aleryan",
+        "slug": "tarek-aleryan",
+        "status": "published",
+        "data": {
+          "title": "طارق العريان",
+          "bio": "مخرج ومنتج سينمائي فلسطيني مصري، يُعد رائداً في تقديم سينما الأكشن الحديثة والتقنيات البصرية المعاصرة في العالم العربي.",
+          "photo": {
+            "src": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&h=800&fit=crop",
+            "alt": "طارق العريان"
+          }
+        }
+      },
+      {
+        "id": "person-bryan-cranston",
+        "slug": "bryan-cranston",
+        "status": "published",
+        "data": {
+          "title": "براين كرانستون",
+          "bio": "ممثل ومخرج أمريكي حائز على جوائز إيمي وغولدن غلوب، اشتهر بأدائه الأسطوري لشخصية والتر وايت في المسلسل التلفزيوني الخالد Breaking Bad.",
+          "photo": {
+            "src": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&h=800&fit=crop",
+            "alt": "براين كرانستون"
+          }
+        }
+      },
+      {
+        "id": "person-vince-gilligan",
+        "slug": "vince-gilligan",
+        "status": "published",
+        "data": {
+          "title": "فينس غيليغان",
+          "bio": "كاتب ومخرج ومنتج أمريكي، مبتكر عالم بريكنج باد ومسلسل Better Call Saul، ويُعتبر أحد أعظم صُنّاع الدراما التلفزيونية في التاريخ.",
+          "photo": {
+            "src": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600&h=800&fit=crop",
+            "alt": "فينس غيليغان"
+          }
+        }
+      },
+      {
+        "id": "person-mona-zaki",
+        "slug": "mona-zaki",
+        "status": "published",
+        "data": {
+          "title": "منى زكي",
+          "bio": "نجمة السينما والدراما العربية، قدمت العديد من الأدوار المميزة التي ناقشت قضايا إنسانية واجتماعية معقدة ونالت عنها عشرات الجوائز التقديرية.",
+          "photo": {
+            "src": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&h=800&fit=crop",
+            "alt": "منى زكي"
+          }
+        }
+      },
+      {
+        "id": "person-karim-abdel-aziz",
+        "slug": "karim-abdel-aziz",
+        "status": "published",
+        "data": {
+          "title": "كريم عبد العزيز",
+          "bio": "نجم سينمائي مصري بارز، تصدرت أعماله شباك التذاكر العربي على مدار أكثر من عقدين وشارك في أضخم الإنتاجات التاريخية والكوميدية والدرامية.",
+          "photo": {
+            "src": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&h=800&fit=crop",
+            "alt": "كريم عبد العزيز"
+          }
+        }
+      },
+      {
+        "id": "person-wael-ihsan",
+        "slug": "wael-ihsan",
+        "status": "published",
+        "data": {
+          "title": "وائل إحسان",
+          "bio": "مخرج سينمائي مصري بارز، قدّم العديد من أشهر وأنجح الأفلام الكوميدية والجماهيرية في السينما المصرية مع كبار نجوم الفن.",
+          "photo": {
+            "src": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=800&fit=crop",
+            "alt": "وائل إحسان"
+          }
+        }
+      },
+      {
+        "id": "person-mohamed-henedy",
+        "slug": "mohamed-henedy",
+        "status": "published",
+        "data": {
+          "title": "محمد هنيدي",
+          "bio": "نجم الكوميديا الأول ورائد موجة السينما الشبابية الجديدة في مصر والوطن العربي، حققت أفلامه أعلى الإيرادات في تاريخ شباك التذاكر العربي.",
+          "photo": {
+            "src": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&h=800&fit=crop",
+            "alt": "محمد هنيدي"
+          }
+        }
+      },
+      {
+        "id": "person-shery-adel",
+        "slug": "shery-adel",
+        "status": "published",
+        "data": {
+          "title": "شيري عادل (شيرين عادل)",
+          "bio": "ممثلة مصرية مميزة شاركت منذ طفولتها في العديد من الأعمال البارزة وقدمت أدواراً سينمائية وتلفزيونية متنوعة نالت إعجاب النقاد والجمهور.",
+          "photo": {
+            "src": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&h=800&fit=crop",
+            "alt": "شيري عادل (شيرين عادل)"
+          }
+        }
+      },
+      {
+        "id": "person-karima-abdullah",
+        "slug": "karima-abdullah",
+        "status": "published",
+        "data": {
+          "title": "كريمة عبدالله",
+          "bio": "فنانة وممثلة مصرية شاركت في العديد من الأعمال الفنية والسينمائية المتميزة.",
+          "photo": {
+            "src": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&h=800&fit=crop",
+            "alt": "كريمة عبدالله"
+          }
+        }
+      }
+    ],
+    "movies": [
+      {
+        "id": "movie-asad",
+        "slug": "asad",
+        "status": "published",
+        "data": {
+          "title": "فيلم أسد",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&h=1200&fit=crop",
+            "alt": "بوستر فيلم أسد"
+          },
+          "release": "2026",
+          "duration": 135,
+          "excerpt": "تدور أحداث فيلم أسد في إطار تشويقي ملحمي حول صراع البقاء والعدالة وسط تحديات كبرى تمزج بين الأكشن العنيف والدراما الإنسانية العميقة.",
+          "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+          "subtitle": "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt",
+          "director": "$ref:person-tarek-aleryan",
+          "peoples": [
+            "$ref:person-ahmed-ezz",
+            "$ref:person-mona-zaki"
+          ]
+        },
+        "taxonomies": {
+          "category": [
+            "movies-arabic"
+          ],
+          "genre": [
+            "action",
+            "drama",
+            "thriller"
+          ],
+          "movie_genre": [
+            "action",
+            "drama",
+            "thriller"
+          ]
+        }
+      },
+      {
+        "id": "movie-welad-rizk-3",
+        "slug": "welad-rizk-3",
+        "status": "published",
+        "data": {
+          "title": "ولاد رزق 3: القاضية",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&h=1200&fit=crop",
+            "alt": "بوستر ولاد رزق 3"
+          },
+          "release": "2024",
+          "duration": 125,
+          "excerpt": "يعود الأخوة من جديد بعد سنوات من الابتعاد عن عالم الجريمة، ليجدوا أنفسهم مجبرين على تنفيذ مهمة مصيرية محفوفة بالمخاطر في شوارع الرياض.",
+          "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+          "subtitle": "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt",
+          "director": "$ref:person-tarek-aleryan",
+          "peoples": [
+            "$ref:person-ahmed-ezz",
+            "$ref:person-karim-abdel-aziz"
+          ]
+        },
+        "taxonomies": {
+          "category": [
+            "movies-arabic"
+          ],
+          "genre": [
+            "action",
+            "crime",
+            "thriller"
+          ],
+          "movie_genre": [
+            "action",
+            "crime",
+            "thriller"
+          ]
+        }
+      },
+      {
+        "id": "movie-oppenheimer",
+        "slug": "oppenheimer",
+        "status": "published",
+        "data": {
+          "title": "أوبنهايمر (Oppenheimer)",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&h=1200&fit=crop",
+            "alt": "بوستر فيلم أوبنهايمر"
+          },
+          "release": "2023",
+          "duration": 180,
+          "excerpt": "قصة الفيزيائي الأمريكي روبرت أوبنهايمر ودوره في تطوير أول سلاح نووي في تاريخ البشرية ضمن مشروع مانهاتن وتداعيات ذلك على العالم.",
+          "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+          "subtitle": "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt",
+          "director": "$ref:person-vince-gilligan",
+          "peoples": [
+            "$ref:person-bryan-cranston"
+          ]
+        },
+        "taxonomies": {
+          "category": [
+            "movies-foreign"
+          ],
+          "genre": [
+            "history",
+            "drama",
+            "war"
+          ],
+          "movie_genre": [
+            "history",
+            "drama",
+            "war"
+          ]
+        }
+      },
+      {
+        "id": "movie-dune-2",
+        "slug": "dune-part-two",
+        "status": "published",
+        "data": {
+          "title": "كثيب: الجزء الثاني (Dune: Part Two)",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800&h=1200&fit=crop",
+            "alt": "بوستر فيلم Dune 2"
+          },
+          "release": "2024",
+          "duration": 166,
+          "excerpt": "يواصل بول أتريدس رحلته الأسطورية متحالفا مع تشاني والفريمن سعياً للانتقام من المتآمرين الذين دمروا عائلته، وسط مصير يهدد الكون بأكمله.",
+          "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+          "subtitle": "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt",
+          "director": "$ref:person-vince-gilligan",
+          "peoples": [
+            "$ref:person-bryan-cranston"
+          ]
+        },
+        "taxonomies": {
+          "category": [
+            "movies-foreign"
+          ],
+          "genre": [
+            "fantasy",
+            "adventure",
+            "action"
+          ],
+          "movie_genre": [
+            "fantasy",
+            "adventure",
+            "action"
+          ]
+        }
+      },
+      {
+        "id": "movie-ameer-al-behar",
+        "slug": "ameer-al-behar",
+        "status": "published",
+        "data": {
+          "title": "فيلم أمير البحار",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&h=1200&fit=crop",
+            "alt": "بوستر فيلم أمير البحار"
+          },
+          "release": "2009",
+          "duration": 115,
+          "excerpt": "تدور الأحداث في إطار كوميدي ساخر حول أمير الشاب المستهتر الذي يدرس في الأكاديمية البحرية ويقود سفينة في رحلة بحرية تواجه قراصنة البحر.",
+          "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+          "subtitle": "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt",
+          "director": "$ref:person-wael-ihsan",
+          "peoples": [
+            "$ref:person-mohamed-henedy",
+            "$ref:person-shery-adel",
+            "$ref:person-karima-abdullah"
+          ]
+        },
+        "taxonomies": {
+          "category": [
+            "movies-arabic"
+          ],
+          "genre": [
+            "comedy",
+            "adventure"
+          ],
+          "movie_genre": [
+            "comedy",
+            "adventure"
+          ]
+        }
+      }
+    ],
+    "tv": [
+      {
+        "id": "tv-breaking-bad",
+        "slug": "breaking-bad",
+        "status": "published",
+        "data": {
+          "title": "بريكنج باد (Breaking Bad)",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=800&h=1200&fit=crop",
+            "alt": "بوستر مسلسل بريكنج باد"
+          },
+          "release": "2008",
+          "excerpt": "مدرس كيمياء في المدرسة الثانوية يُدعى والتر وايت، يُشخّص بمرض سرطان الرئة الميؤوس منه، فيتحول إلى عالم تصنيع الميثامفيتامين لتأمين مستقبل عائلته المالي بمساعدة طالبه السابق جيسي بينكمان.",
+          "director": "$ref:person-vince-gilligan",
+          "peoples": [
+            "$ref:person-bryan-cranston"
+          ],
+          "seasons": [
+            "$ref:season-bb-1"
+          ]
+        },
+        "taxonomies": {
+          "category": [
+            "series-foreign"
+          ],
+          "genre": [
+            "drama",
+            "crime",
+            "thriller"
+          ],
+          "tv_genre": [
+            "drama",
+            "crime",
+            "thriller"
+          ]
+        }
+      },
+      {
+        "id": "tv-el-hashashin",
+        "slug": "el-hashashin",
+        "status": "published",
+        "data": {
+          "title": "الحشاشين",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800&h=1200&fit=crop",
+            "alt": "بوستر مسلسل الحشاشين"
+          },
+          "release": "2024",
+          "excerpt": "ملحمة تاريخية مشوقة ترصد نشأة طائفة الحشاشين وزعيمها حسن الصباح في القرن الحادي عشر من قلعة ألموت، وتأثيرهم المرعب عبر الاغتيالات السياسية الأولى في التاريخ.",
+          "director": "$ref:person-tarek-aleryan",
+          "peoples": [
+            "$ref:person-karim-abdel-aziz"
+          ],
+          "seasons": [
+            "$ref:season-hashashin-1"
+          ]
+        },
+        "taxonomies": {
+          "category": [
+            "series-arabic"
+          ],
+          "genre": [
+            "history",
+            "drama",
+            "action"
+          ],
+          "tv_genre": [
+            "history",
+            "drama",
+            "action"
+          ]
+        }
+      }
+    ],
+    "seasons": [
+      {
+        "id": "season-bb-1",
+        "slug": "breaking-bad-season-1",
+        "status": "published",
+        "data": {
+          "title": "Breaking Bad - الموسم الأول (Season 1)",
+          "season_number": 1,
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=800&h=1200&fit=crop",
+            "alt": "بوستر الموسم الأول بريكنج باد"
+          },
+          "release": "2008",
+          "excerpt": "يبدأ مدرس الكيمياء والتر وايت رحلته المظلمة بعد علمه بإصابته بمرض خطير، ليتشارك مع طالبه السابق جيسي بينكمان في تصنيع المواد المخدرة ومواجهة أولى كوارث تجارة الموت في صحراء نيو مكسيكو.",
+          "tv": "$ref:tv-breaking-bad",
+          "episodes": [
+            "$ref:ep-bb-1-1",
+            "$ref:ep-bb-1-2",
+            "$ref:ep-bb-1-3",
+            "$ref:ep-bb-1-4",
+            "$ref:ep-bb-1-5",
+            "$ref:ep-bb-1-6",
+            "$ref:ep-bb-1-7"
+          ]
+        }
+      },
+      {
+        "id": "season-hashashin-1",
+        "slug": "el-hashashin-season-1",
+        "status": "published",
+        "data": {
+          "title": "الحشاشين - الموسم الأول",
+          "season_number": 1,
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800&h=1200&fit=crop",
+            "alt": "بوستر الحشاشين الموسم 1"
+          },
+          "release": "2024",
+          "excerpt": "رحلة حسن الصباح وصعوده لتأسيس جماعة الفدائيين وبناء حصن ألموت المنيع وتدبير أخطر الاغتيالات التي زلزلت ممالك الشرق.",
+          "tv": "$ref:tv-el-hashashin",
+          "episodes": [
+            "$ref:ep-hashashin-1-1",
+            "$ref:ep-hashashin-1-2"
+          ]
+        }
+      }
+    ],
+    "episodes": [
+      {
+        "id": "ep-bb-1-1",
+        "slug": "breaking-bad-season-1-episode-1",
+        "status": "published",
+        "data": {
+          "title": "الحلقة 1: الحلقة التجريبية (Pilot)",
+          "episode_number": 1,
+          "duration": 58,
+          "excerpt": "يصدم والتر وايت بتشخيص إصابته بالسرطان، ويقرر الدخول في شراكة مع تاجر محلي يدعى جيسي بينكمان لتأمين عائلته قبل فوات الأوان.",
+          "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+          "subtitle": "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&h=450&fit=crop",
+            "alt": "الحلقة 1"
+          },
+          "seasons": "$ref:season-bb-1"
+        }
+      },
+      {
+        "id": "ep-bb-1-2",
+        "slug": "breaking-bad-season-1-episode-2",
+        "status": "published",
+        "data": {
+          "title": "الحلقة 2: القط لا يزال في الحقيبة",
+          "episode_number": 2,
+          "duration": 48,
+          "excerpt": "يواجه والت وجيسي أولى عواقب صفقتهما الأولى، ويسعيان للتخلص من جثتين ومواجهة مأزق أخلاقي غير مسبوق.",
+          "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+          "subtitle": "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&h=450&fit=crop",
+            "alt": "الحلقة 2"
+          },
+          "seasons": "$ref:season-bb-1"
+        }
+      },
+      {
+        "id": "ep-bb-1-3",
+        "slug": "breaking-bad-season-1-episode-3",
+        "status": "published",
+        "data": {
+          "title": "الحلقة 3: وحقيبة مليئة بالنهر",
+          "episode_number": 3,
+          "duration": 48,
+          "excerpt": "يجد والتر نفسه مجبراً على اتخاذ قرار مصيري بشأن مصير السجين المحتجز في القبو، بينما تشك زوجته سكايلر في تصرفاته المريبة.",
+          "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+          "subtitle": "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800&h=450&fit=crop",
+            "alt": "الحلقة 3"
+          },
+          "seasons": "$ref:season-bb-1"
+        }
+      },
+      {
+        "id": "ep-bb-1-4",
+        "slug": "breaking-bad-season-1-episode-4",
+        "status": "published",
+        "data": {
+          "title": "الحلقة 4: السرطان",
+          "episode_number": 4,
+          "duration": 48,
+          "excerpt": "يعترف والتر لعائلته أخيراً بحقيقة مرضه، بينما يواجه جيسي مشاكل أسرية تحرمه من الاستقرار.",
+          "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+          "subtitle": "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&h=450&fit=crop",
+            "alt": "الحلقة 4"
+          },
+          "seasons": "$ref:season-bb-1"
+        }
+      },
+      {
+        "id": "ep-bb-1-5",
+        "slug": "breaking-bad-season-1-episode-5",
+        "status": "published",
+        "data": {
+          "title": "الحلقة 5: المأزق الرمادي (Gray Matter)",
+          "episode_number": 5,
+          "duration": 48,
+          "excerpt": "يكتشف والت وجيسي معلومات جديدة بينما يواجهان مأزقاً خطيراً في الصحراء بعد رفض والتر لمساعدة أصدقائه القدامى في تكاليف العلاج.",
+          "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+          "subtitle": "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=800&h=450&fit=crop",
+            "alt": "الحلقة 5"
+          },
+          "seasons": "$ref:season-bb-1"
+        }
+      },
+      {
+        "id": "ep-bb-1-6",
+        "slug": "breaking-bad-season-1-episode-6",
+        "status": "published",
+        "data": {
+          "title": "الحلقة 6: قنبلة يدوية مجنونة",
+          "episode_number": 6,
+          "duration": 48,
+          "excerpt": "يتحول والت بالكامل إلى شخصيته البديلة 'هايزنبرغ' ويواجه تاجر المخدرات الخطر توكو سالامانكا في مواجهة ملحمية.",
+          "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+          "subtitle": "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&h=450&fit=crop",
+            "alt": "الحلقة 6"
+          },
+          "seasons": "$ref:season-bb-1"
+        }
+      },
+      {
+        "id": "ep-bb-1-7",
+        "slug": "breaking-bad-season-1-episode-7",
+        "status": "published",
+        "data": {
+          "title": "الحلقة 7: صفقة من نوع لا يهدأ",
+          "episode_number": 7,
+          "duration": 48,
+          "excerpt": "نهاية أحداث الموسم الأول المشوقة، حيث يعقد والت وجيسي صفقة كمية ضخمة مع توكو تتطلب منهما سرقة مواد كيميائية خطيرة.",
+          "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+          "subtitle": "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&h=450&fit=crop",
+            "alt": "الحلقة 7"
+          },
+          "seasons": "$ref:season-bb-1"
+        }
+      },
+      {
+        "id": "ep-hashashin-1-1",
+        "slug": "el-hashashin-season-1-episode-1",
+        "status": "published",
+        "data": {
+          "title": "الحلقة 1: العهد والمولد",
+          "episode_number": 1,
+          "duration": 45,
+          "excerpt": "بدايات الصداقة التاريخية بين حسن الصباح وعمر الخيام ونظام الملك والعهد المشترك بينهم في مرحلة الشباب.",
+          "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+          "subtitle": "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800&h=450&fit=crop",
+            "alt": "الحلقة 1 الحشاشين"
+          },
+          "seasons": "$ref:season-hashashin-1"
+        }
+      },
+      {
+        "id": "ep-hashashin-1-2",
+        "slug": "el-hashashin-season-1-episode-2",
+        "status": "published",
+        "data": {
+          "title": "الحلقة 2: قلعة ألموت",
+          "episode_number": 2,
+          "duration": 47,
+          "excerpt": "يخطط حسن الصباح للاستيلاء على قلعة ألموت الحصينة بالدهاء ودون إراقة دماء لتكون معقله الأبدي.",
+          "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+          "subtitle": "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt",
+          "featured_image": {
+            "src": "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800&h=450&fit=crop",
+            "alt": "الحلقة 2 الحشاشين"
+          },
+          "seasons": "$ref:season-hashashin-1"
+        }
+      }
+    ]
+  }
 }

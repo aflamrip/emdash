@@ -1,0 +1,58 @@
+<script lang="ts">
+	interface Props {
+		variant?: "primary" | "secondary" | "tonal" | "outline" | "ghost";
+		size?: "sm" | "md" | "lg";
+		href?: string;
+		class?: string;
+		children?: any;
+		[key: string]: any;
+	}
+
+	let {
+		variant = "primary",
+		size = "md",
+		href,
+		class: className = "",
+		children,
+		...rest
+	}: Props = $props();
+
+	const baseStyles =
+		"inline-flex items-center justify-center font-bold rounded-full transition-all duration-200 cursor-pointer select-none gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-brand)]";
+
+	const variantStyles = {
+		primary:
+			"bg-[var(--color-brand)] text-[var(--color-on-brand)] hover:bg-[var(--color-brand-hover)] shadow-md shadow-[var(--color-brand)]/25",
+		secondary:
+			"bg-[var(--color-fill)] text-[var(--color-text)] hover:bg-[var(--color-fill-strong)] border border-[var(--color-border)]",
+		tonal:
+			"bg-[var(--color-fill-strong)] text-[var(--color-text)] hover:bg-[var(--color-fill)]",
+		outline:
+			"bg-transparent border border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]",
+		ghost:
+			"bg-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-fill)]",
+	};
+
+	const sizeStyles = {
+		sm: "text-xs px-3 py-1.5",
+		md: "text-sm px-4 py-2",
+		lg: "text-base px-6 py-3",
+	};
+</script>
+
+{#if href}
+	<a
+		{href}
+		class="{baseStyles} {variantStyles[variant]} {sizeStyles[size]} {className}"
+		{...rest}
+	>
+		{@render children?.()}
+	</a>
+{:else}
+	<button
+		class="{baseStyles} {variantStyles[variant]} {sizeStyles[size]} {className}"
+		{...rest}
+	>
+		{@render children?.()}
+	</button>
+{/if}

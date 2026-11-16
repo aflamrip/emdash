@@ -1,0 +1,299 @@
+---
+import CimaLayout from "../../../../layouts/CimaLayout.astro";
+import VideoPlayer from "../../../../components/molecules/VideoPlayer.svelte";
+import Breadcrumbs from "../../../../components/molecules/Breadcrumbs.astro";
+import Button from "../../../../components/atoms/Button.astro";
+import { Comments, CommentForm } from "emdash/ui/comments";
+import { getEmDashEntry } from "emdash";
+
+const { slug, season: seasonParam, episode: episodeParam } = Astro.params;
+const seasonNum = parseInt(seasonParam ?? "1", 10);
+const episodeNum = parseInt(episodeParam ?? "1", 10);
+
+if (!slug || isNaN(seasonNum) || isNaN(episodeNum)) {
+	return Astro.redirect("/tv");
+}
+
+let tvEntry: any = null;
+let currentEpisode: any = null;
+let seasonEpisodes: any[] = [];
+let seasonEntry: any = null;
+
+try {
+	// 1. جلب المسلسل مع قائمة مواسمه (Hierarchical References)
+	const tvRes = await getEmDashEntry("tv", slug, {
+		references: { seasons: { limit: 20 } },
+	}).catch(() => null);
+
+	tvEntry = tvRes?.entry ?? null;
+
+	if (!tvEntry) {
+		return Astro.redirect("/tv");
+	}
+
+	// 2. البحث عن الموسم المطلوب
+	const rawSeasons: any[] = tvEntry?.references?.seasons?.entries ?? [];
+
+	const matchedSeason = rawSeasons.find(
+		(s: any) =>
+			s.data?.season_number === seasonNum ||
+			s.id.endsWith(`season-${seasonNum}`)
+	) ?? rawSeasons[0];
+
+	if (!matchedSeason) {
+		return Astro.redirect(`/tv/${slug}`);
+	}
+
+	// 3. جلب الموسم الكامل مع حلقاته (Hierarchical References)
+	const seasonRes = await getEmDashEntry("seasons", matchedSeason.id, {
+		references: { episodes: { limit: 100 } },
+	}).catch(() => null);
+
+	seasonEntry = seasonRes?.entry ?? matchedSeason;
+
+	// 4. الحلقات مرتبة
+	seasonEpisodes = (seasonEntry?.references?.episodes?.entries ?? [])
+		.sort((a: any, b: any) => (a.data?.episode_number ?? 0) - (b.data?.episode_number ?? 0));
+
+	// 5. إيجاد الحلقة المطلوبة
+	currentEpisode =
+		seasonEpisodes.find((ep: any) => ep.data?.episode_number === episodeNum) ??
+		seasonEpisodes[0] ??
+		null;
+
+} catch (e) {
+	console.error("Error fetching episode watch page:", e);
+}
+
+if (!tvEntry || !currentEpisode) {
+	return Astro.redirect(`/tv/${slug}`);
+}
+
+const series = tvEntry.data;
+const ep = currentEpisode.data;
+
+// التنقل بين الحلقات
+const prevEpisode = seasonEpisodes.find((e: any) => e.data?.episode_number === episodeNum - 1) ?? null;
+const nextEpisode = seasonEpisodes.find((e: any) => e.data?.episode_number === episodeNum + 1) ?? null;
+
+const posterUrl =
+	typeof ep.featured_image === "string"
+		? ep.featured_image
+		: ep.featured_image?.src ??
+			(typeof series.featured_image === "string"
+				? series.featured_image
+				: series.featured_image?.src);
+
+const videoSrc = ep.video ?? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+const subtitleSrc = ep.subtitle ?? "";
+const pageTitle = `مشاهدة ${series.title} – الموسم ${seasonNum}، الحلقة ${episodeNum} | معاك سيما`;
+const canonicalUrl = new URL(
+	`/tv/${slug}/season-${seasonNum}/episode-${episodeNum}`,
+	Astro.site ?? Astro.url.origin
+).href;
+
+// Schema.org TVEpisode — partOfSeason + partOfSeries (الموصى به)
+const episodeSchema = {
+	"@context": "https://schema.org",
+	"@type": "TVEpisode",
+	"name": ep.title ?? `الحلقة ${episodeNum}`,
+	"episodeNumber": episodeNum,
+	"description": ep.excerpt ?? `مشاهدة الحلقة ${episodeNum} من الموسم ${seasonNum} لمسلسل ${series.title}`,
+	"image": posterUrl,
+	"url": canonicalUrl,
+	"duration": ep.duration ? `PT${ep.duration}M` : undefined,
+	"partOfSeason": {
+		"@type": "TVSeason",
+		"name": seasonEntry?.data?.title ?? `الموسم ${seasonNum}`,
+		"seasonNumber": seasonNum,
+		"url": new URL(`/tv/${slug}/season-${seasonNum}`, Astro.site ?? Astro.url.origin).href,
+		"partOfSeries": {
+			"@type": "TVSeries",
+			"name": series.title,
+			"url": new URL(`/tv/${slug}`, Astro.site ?? Astro.url.origin).href,
+		},
+	},
+	"partOfSeries": {
+		"@type": "TVSeries",
+		"name": series.title,
+		"url": new URL(`/tv/${slug}`, Astro.site ?? Astro.url.origin).href,
+	},
+};
+---
+
+<CimaLayout
+	title={pageTitle}
+	description={ep.excerpt ?? `مشاهدة الحلقة ${episodeNum} من الموسم ${seasonNum} لمسلسل ${series.title}`}
+	image={posterUrl}
+	type="video.episode"
+	content={{ collection: "episodes", id: currentEpisode.data?.id ?? currentEpisode.id, slug: currentEpisode.id }}
+>
+	<div class="md3-container pt-3">
+		<!-- Breadcrumbs الهرمي (TV → Series → Season → Episode) -->
+		<Breadcrumbs
+			items={[
+				{ label: "المسلسلات", href: "/tv" },
+				{ label: series.title, href: `/tv/${slug}` },
+				{ label: `الموسم ${seasonNum}`, href: `/tv/${slug}/season-${seasonNum}` },
+				{ label: `الحلقة ${episodeNum}` },
+			]}
+		/>
+
+		<!-- Top Bar Navigation -->
+		<div class="flex items-center justify-between py-2 border-b border-[var(--color-border)] text-sm mb-4">
+			<a
+				href={`/tv/${slug}/season-${seasonNum}`}
+				class="inline-flex items-center gap-1.5 text-[var(--color-text)] hover:text-white font-semibold transition-colors bg-[var(--color-fill)] hover:bg-[var(--color-brand)] px-3.5 py-1.5 rounded-full border border-[var(--color-border)]"
+			>
+				<span>⬅</span>
+				<span>الموسم {seasonNum}</span>
+			</a>
+
+			<div class="flex items-center gap-2">
+				<span class="text-xs md:text-sm font-bold text-[var(--color-text)] text-center leading-tight">
+					{series.title}
+					<span class="text-[var(--color-text-secondary)] font-normal">
+						— الموسم {seasonNum} — الحلقة {episodeNum}
+					</span>
+				</span>
+			</div>
+		</div>
+
+		<!-- Video.js Player (Deferred client:idle for optimal PageSpeed TBT & INP) -->
+		<div class="w-full my-4">
+			<VideoPlayer
+				client:idle
+				src={videoSrc}
+				poster={posterUrl}
+				subtitle={subtitleSrc}
+				title={pageTitle}
+			/>
+		</div>
+
+		<!-- Next / Previous Controls -->
+		<div class="flex items-center justify-between my-6 bg-[var(--color-surface)] border border-[var(--color-border)] p-3 rounded-xl shadow-sm">
+			{prevEpisode ? (
+				<Button
+					href={`/tv/${slug}/season-${seasonNum}/episode-${prevEpisode.data?.episode_number}`}
+					variant="secondary"
+					size="md"
+				>
+					<span>◀ الحلقة {prevEpisode.data?.episode_number}</span>
+				</Button>
+			) : (
+				<div></div>
+			)}
+
+			<div class="text-xs text-muted font-medium">
+				الحلقة {episodeNum} من {seasonEpisodes.length}
+			</div>
+
+			{nextEpisode ? (
+				<Button
+					href={`/tv/${slug}/season-${seasonNum}/episode-${nextEpisode.data?.episode_number}`}
+					variant="primary"
+					size="md"
+				>
+					<span>الحلقة {nextEpisode.data?.episode_number} ▶</span>
+				</Button>
+			) : (
+				<div></div>
+			)}
+		</div>
+
+		<!-- Episodes Quick Switch (تبديل سريع بين حلقات الموسم) -->
+		<section class="mb-10 w-full">
+			<div class="flex items-center justify-between mb-4">
+				<h2 class="text-base md:text-lg font-bold text-[var(--color-text)] flex items-center gap-2">
+					<span>⚡</span>
+					<span>حلقات الموسم {seasonNum}</span>
+				</h2>
+				<a
+					href={`/tv/${slug}/season-${seasonNum}`}
+					class="text-xs md:text-sm font-semibold text-[var(--color-brand)] hover:underline flex items-center gap-1 transition-colors"
+				>
+					<span>عرض كل الحلقات</span>
+					<span>←</span>
+				</a>
+			</div>
+
+			<div class="flex items-center gap-2 overflow-x-auto pb-3 scrollbar-none">
+				{seasonEpisodes.map((item: any) => {
+					const itemEpNum = item.data?.episode_number ?? 1;
+					const isCurrent = itemEpNum === episodeNum;
+					return (
+						<a
+							href={`/tv/${slug}/season-${seasonNum}/episode-${itemEpNum}`}
+							aria-current={isCurrent ? "page" : undefined}
+							class={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
+								isCurrent
+									? "bg-[var(--color-brand)] text-[var(--color-on-brand)] border-[var(--color-brand)] shadow-md"
+									: "bg-[var(--color-surface)] text-[var(--color-text)] border-[var(--color-border)] hover:border-[var(--color-brand)] hover:bg-[var(--color-fill)]"
+							}`}
+						>
+							الحلقة {itemEpNum}
+						</a>
+					);
+				})}
+			</div>
+		</section>
+
+		<!-- Episode Synopsis -->
+		{(ep.excerpt || ep.title) && (
+			<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5 my-6 shadow-sm" {...currentEpisode.edit}>
+				<h3 class="text-sm font-bold text-[var(--color-text)] mb-2 flex items-center gap-1.5" {...currentEpisode.edit?.title}>
+					<span>📝</span>
+					<span>نبذة عن أحداث هذه الحلقة:</span>
+				</h3>
+				<p class="text-[var(--color-text-secondary)] text-sm leading-relaxed" {...currentEpisode.edit?.excerpt}>
+					{ep.excerpt ?? ep.title}
+				</p>
+			</div>
+		)}
+
+		<!-- EmDash Default Comments Section -->
+		<section class="my-10 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 md:p-8 shadow-sm comments-container">
+			<div class="flex items-center gap-2 mb-6 border-b border-[var(--color-border)] pb-3">
+				<span class="text-xl">💬</span>
+				<h2 class="text-lg md:text-xl font-bold text-[var(--color-text)]">
+					مناقشات وتعليقات المشاهدين على الحلقة
+				</h2>
+			</div>
+
+			<Comments
+				collection="episodes"
+				contentId={currentEpisode.data?.id ?? currentEpisode.id}
+				threaded
+				labels={{
+					heading: (count) => (count === 0 ? "لا توجد تعليقات بعد، شارك برأيك حول هذه الحلقة!" : count === 1 ? "تعليق واحد" : count === 2 ? "تعليقان" : `${count} تعليقات`),
+					member: "عضو",
+					like: "إعجاب",
+				}}
+			/>
+
+			<div class="mt-8 pt-6 border-t border-[var(--color-border)]">
+				<h3 class="text-sm font-bold text-[var(--color-text)] mb-4">
+					أضف تعليقك على الحلقة:
+				</h3>
+				<CommentForm
+					collection="episodes"
+					contentId={currentEpisode.data?.id ?? currentEpisode.id}
+					labels={{
+						name: "الاسم",
+						email: "البريد الإلكتروني",
+						comment: "اكتب رأيك أو تحليلك للحلقة هنا...",
+						submit: "إرسال التعليق",
+						submitting: "جاري الإرسال...",
+						published: "تم نشر تعليقك بنجاح",
+						pending: "تم إرسال تعليقك وسيظهر بعد المراجعة",
+						error: "تعذر إرسال التعليق، يرجى المحاولة لاحقاً.",
+						networkError: "خطأ في الشبكة، يرجى إعادة المحاولة.",
+					}}
+				/>
+			</div>
+		</section>
+
+		<!-- Schema.org TVEpisode Structured Data -->
+		<script type="application/ld+json" set:html={JSON.stringify(episodeSchema)} />
+	</div>
+</CimaLayout>

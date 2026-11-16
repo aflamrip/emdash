@@ -1,0 +1,95 @@
+---
+import CimaLayout from "../../../layouts/CimaLayout.astro";
+import MediaCard from "../../../components/molecules/MediaCard.astro";
+import Breadcrumbs from "../../../components/molecules/Breadcrumbs.astro";
+import Chip from "../../../components/atoms/Chip.astro";
+import { getEntriesByTerm, getTerm, getTaxonomyTerms } from "emdash";
+
+const { genre } = Astro.params;
+if (!genre) {
+	return Astro.redirect("/tv");
+}
+
+let term: any = null;
+let tvSeries: any[] = [];
+let allGenres: any[] = [];
+
+try {
+	// Try tv_genre first, fallback to genre
+	let [termRes, entriesRes, allGenresRes] = await Promise.all([
+		getTerm("tv_genre", genre).catch(() => getTerm("genre", genre)),
+		getEntriesByTerm("tv", "tv_genre", genre).catch(() => []),
+		getTaxonomyTerms("tv_genre").catch(() => getTaxonomyTerms("genre")),
+	]);
+
+	term = termRes;
+	let fetchedTv = Array.isArray(entriesRes) ? entriesRes : [];
+
+	if (fetchedTv.length === 0) {
+		const fallbackEntries = await getEntriesByTerm("tv", "genre", genre).catch(() => []);
+		fetchedTv = Array.isArray(fallbackEntries) ? fallbackEntries : [];
+	}
+
+	tvSeries = fetchedTv;
+	allGenres = allGenresRes || [];
+} catch (e) {
+	console.error("Error fetching genre tv series:", e);
+}
+
+const genreTitle = term?.label || genre;
+---
+
+<CimaLayout
+	title={`مسلسلات ${genreTitle} | معاك سيما`}
+	description={`شاهد وتصفح أحدث مسلسلات ${genreTitle} العربية والأجنبية المترجمة بجودة عالية بجميع المواسم والحلقات.`}
+>
+	<div class="md3-container pt-4">
+		<!-- Breadcrumbs -->
+		<Breadcrumbs
+			items={[
+				{ label: "المسلسلات", href: "/tv" },
+				{ label: `تصنيف: ${genreTitle}` },
+			]}
+		/>
+
+		<!-- Header -->
+		<div class="my-6">
+			<h1 class="text-2xl md:text-3xl font-extrabold text-[var(--color-text)] flex items-center gap-2">
+				<span>⚡</span>
+				<span>مسلسلات {genreTitle}</span>
+			</h1>
+			<p class="text-muted text-sm mt-1">
+				قائمة بأفضل وأحدث مسلسلات تصنيف {genreTitle} المتاحة للمشاهدة المباشرة
+			</p>
+		</div>
+
+		<!-- Genres Filter -->
+		<div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
+			<Chip href="/tv">كل المسلسلات</Chip>
+			{allGenres.map((g) => (
+				<Chip href={`/tv/genre/${g.slug}`} active={g.slug === genre}>
+					{g.label}
+				</Chip>
+			))}
+		</div>
+
+		<!-- Grid of TV Shows (Minimal JS with MediaCard.astro) -->
+		{tvSeries.length > 0 ? (
+			<div class="media-grid mb-14">
+				{tvSeries.map((series) => (
+					<MediaCard
+						title={series.data.title}
+						slug={series.id}
+						type="tv"
+						image={series.data.featured_image}
+						release={series.data.release}
+					/>
+				))}
+			</div>
+		) : (
+			<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-12 text-center text-muted my-6">
+				لا توجد مسلسلات مضافة في تصنيف {genreTitle} حالياً.
+			</div>
+		)}
+	</div>
+</CimaLayout>

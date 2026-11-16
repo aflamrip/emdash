@@ -1,0 +1,137 @@
+---
+import CimaLayout from "../../layouts/CimaLayout.astro";
+import MediaCard from "../../components/molecules/MediaCard.astro";
+import Breadcrumbs from "../../components/molecules/Breadcrumbs.astro";
+import Chip from "../../components/atoms/Chip.astro";
+import { getTerm, getEntriesByTerm, getTaxonomyTerms } from "emdash";
+
+const { category } = Astro.params;
+if (!category) {
+	return Astro.redirect("/category");
+}
+
+let term: any = null;
+let items: any[] = [];
+let allCategories: any[] = [];
+
+try {
+	const [termRes, allCatsRes] = await Promise.all([
+		getTerm("category", category),
+		getTaxonomyTerms("category"),
+	]);
+	term = termRes;
+	allCategories = allCatsRes || [];
+
+	if (allCategories.length === 0) {
+		allCategories = [
+			{ slug: "movies-arabic", label: "أفلام عربية" },
+			{ slug: "movies-foreign", label: "أفلام أجنبية مترجمة" },
+			{ slug: "series-arabic", label: "مسلسلات عربية" },
+			{ slug: "series-foreign", label: "مسلسلات أجنبية مترجمة" },
+		];
+	}
+
+	if (!term) {
+		term = allCategories.find((c: any) => c.slug === category);
+	}
+
+	const isMovies = category.includes("movies") || category.includes("movie");
+	const isSeries = category.includes("series") || category.includes("tv");
+
+	if (isMovies) {
+		const res = await getEntriesByTerm("movies", "category", category);
+		items = (Array.isArray(res) ? res : []).map((m: any) => ({ ...m, type: "movie" }));
+	} else if (isSeries) {
+		const res = await getEntriesByTerm("tv", "category", category);
+		items = (Array.isArray(res) ? res : []).map((t: any) => ({ ...t, type: "tv" }));
+	} else {
+		const [movRes, tvRes] = await Promise.all([
+			getEntriesByTerm("movies", "category", category),
+			getEntriesByTerm("tv", "category", category),
+		]);
+		const mov = (Array.isArray(movRes) ? movRes : []).map((m: any) => ({ ...m, type: "movie" }));
+		const tv = (Array.isArray(tvRes) ? tvRes : []).map((t: any) => ({ ...t, type: "tv" }));
+		items = [...mov, ...tv];
+	}
+} catch (e) {
+	console.error("Error fetching category entries:", e);
+}
+
+const categoryTitle = term?.label || category;
+---
+
+<CimaLayout
+	title={`${categoryTitle} | معاك سيما`}
+	description={`مشاهدة أحدث إصدارات قسم ${categoryTitle} أونلاين بدقة عالية وبدون تقطيع على معاك سيما.`}
+>
+	<div class="md3-container pt-4">
+		<!-- Breadcrumbs -->
+		<Breadcrumbs
+			items={[
+				{ label: "الأقسام الرئيسية", href: "/category" },
+				{ label: categoryTitle },
+			]}
+		/>
+
+		<!-- Header -->
+		<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 my-6">
+			<div>
+				<h1 class="text-2xl md:text-3xl font-extrabold text-[var(--color-text)] flex items-center gap-2">
+					<span>📂</span>
+					<span>{categoryTitle}</span>
+				</h1>
+				<p class="text-muted text-sm mt-1">
+					تصفح وشاهد كل ما هو جديد ومميز في قسم {categoryTitle}
+				</p>
+			</div>
+
+			{items.length > 0 && (
+				<span class="text-xs text-muted bg-[var(--color-surface)] px-3 py-1.5 rounded-full border border-[var(--color-border)] self-start md:self-auto">
+					إجمالي الأعمال: {items.length}
+				</span>
+			)}
+		</div>
+
+		<!-- Categories Filter -->
+		<div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
+			<Chip href="/category">جميع الأقسام</Chip>
+			{allCategories.map((c) => (
+				<Chip href={`/category/${c.slug}`} active={c.slug === category}>
+					{c.label}
+				</Chip>
+			))}
+		</div>
+
+		<!-- Responsive Grid of Items (Minimal JS with MediaCard.astro) -->
+		{items.length > 0 ? (
+			<div class="media-grid mb-16">
+				{items.map((item) => (
+					<MediaCard
+						title={item.data.title}
+						slug={item.id}
+						type={item.type}
+						image={item.data.featured_image}
+						release={item.data.release}
+						duration={item.data.duration}
+					/>
+				))}
+			</div>
+		) : (
+			<div class="text-center py-16 bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] my-6">
+				<span class="text-4xl block mb-2">🎬</span>
+				<h3 class="text-lg font-bold text-[var(--color-text)] mb-1">
+					لا توجد أعمال مضافة حالياً في هذا القسم
+				</h3>
+				<p class="text-muted text-sm mb-4">
+					سيتم إضافة محتوى جديد قريباً إلى قسم {categoryTitle}
+				</p>
+				<a
+					href="/movies"
+					class="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--color-brand)] text-white text-xs font-bold rounded-lg hover:bg-[var(--color-brand-hover)] transition-colors"
+				>
+					تصفح أحدث الأفلام المتاحة
+				</a>
+			</div>
+		)}
+	</div>
+</CimaLayout>

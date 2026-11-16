@@ -1,0 +1,2 @@
+# Cloudflare Pages / Workers URL Rewrites for FlyWeb
+/.flyweb/*  /api/flyweb/:splat  200

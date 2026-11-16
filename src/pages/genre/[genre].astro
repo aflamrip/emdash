@@ -1,0 +1,150 @@
+---
+import CimaLayout from "../../layouts/CimaLayout.astro";
+import MediaCard from "../../components/molecules/MediaCard.astro";
+import Breadcrumbs from "../../components/molecules/Breadcrumbs.astro";
+import Chip from "../../components/atoms/Chip.astro";
+import { getTerm, getEntriesByTerm, getTaxonomyTerms } from "emdash";
+
+const { genre } = Astro.params;
+if (!genre) {
+	return Astro.redirect("/genre");
+}
+
+let term: any = null;
+let movies: any[] = [];
+let tvSeries: any[] = [];
+let allGenres: any[] = [];
+
+try {
+	const [termRes, mEntriesRes, tEntriesRes, allGRes] = await Promise.all([
+		getTerm("genre", genre).catch(() => getTerm("movie_genre", genre)),
+		getEntriesByTerm("movies", "genre", genre).catch(() => getEntriesByTerm("movies", "movie_genre", genre)),
+		getEntriesByTerm("tv", "genre", genre).catch(() => getEntriesByTerm("tv", "tv_genre", genre)),
+		getTaxonomyTerms("genre").catch(() => getTaxonomyTerms("movie_genre")),
+	]);
+
+	term = termRes;
+	movies = Array.isArray(mEntriesRes) ? mEntriesRes : [];
+	tvSeries = Array.isArray(tEntriesRes) ? tEntriesRes : [];
+	allGenres = allGRes || [];
+} catch (e) {
+	console.error("Error fetching genre content:", e);
+}
+
+const genreTitle = term?.label || genre;
+---
+
+<CimaLayout
+	title={`أعمال تصنيف ${genreTitle} | معاك سيما`}
+	description={`شاهد وتصفح أحدث الأفلام والمسلسلات في تصنيف ${genreTitle} بجودة عالية Full HD.`}
+>
+	<div class="md3-container pt-4">
+		<!-- Breadcrumbs -->
+		<Breadcrumbs
+			items={[
+				{ label: "التصنيفات الفنية", href: "/genre" },
+				{ label: genreTitle },
+			]}
+		/>
+
+		<!-- Header -->
+		<div class="my-6">
+			<h1 class="text-2xl md:text-3xl font-extrabold text-[var(--color-text)] flex items-center gap-2">
+				<span>🏷️</span>
+				<span>أعمال تصنيف {genreTitle}</span>
+			</h1>
+			<p class="text-muted text-sm mt-1">
+				استكشف الأفلام والمسلسلات في تصنيف {genreTitle} المتاحة للمشاهدة المباشرة
+			</p>
+		</div>
+
+		<!-- Switch between Movies and TV specialized genre pages -->
+		<div class="flex items-center gap-3 mb-8">
+			<a
+				href={`/movies/genre/${genre}`}
+				class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-surface)] hover:bg-[var(--color-fill)] border border-[var(--color-border)] hover:border-[var(--color-brand)] text-xs md:text-sm font-semibold text-[var(--color-text)] transition-colors shadow-sm"
+			>
+				<span>🎬</span>
+				<span>أفلام {genreTitle} فقط</span>
+				<span>({movies.length})</span>
+			</a>
+			<a
+				href={`/tv/genre/${genre}`}
+				class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-surface)] hover:bg-[var(--color-fill)] border border-[var(--color-border)] hover:border-[var(--color-brand)] text-xs md:text-sm font-semibold text-[var(--color-text)] transition-colors shadow-sm"
+			>
+				<span>📺</span>
+				<span>مسلسلات {genreTitle} فقط</span>
+				<span>({tvSeries.length})</span>
+			</a>
+		</div>
+
+		<!-- Genres Filter -->
+		<div class="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-none">
+			<Chip href="/genre">جميع التصنيفات</Chip>
+			{allGenres.map((g) => (
+				<Chip href={`/genre/${g.slug}`} active={g.slug === genre}>
+					{g.label}
+				</Chip>
+			))}
+		</div>
+
+		<!-- Movies in this genre -->
+		{movies.length > 0 && (
+			<section class="mb-12">
+				<div class="flex items-center justify-between mb-4 border-b border-[var(--color-border)] pb-2">
+					<h2 class="text-lg md:text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
+						<span>🎬</span>
+						<span>أفلام {genreTitle}</span>
+					</h2>
+					<a href={`/movies/genre/${genre}`} class="text-xs text-[var(--color-brand)] font-semibold hover:underline">
+						عرض كل أفلام {genreTitle} ←
+					</a>
+				</div>
+				<div class="media-grid">
+					{movies.map((m) => (
+						<MediaCard
+							title={m.data.title}
+							slug={m.id}
+							type="movie"
+							image={m.data.featured_image}
+							release={m.data.release}
+							duration={m.data.duration}
+						/>
+					))}
+				</div>
+			</section>
+		)}
+
+		<!-- TV in this genre -->
+		{tvSeries.length > 0 && (
+			<section class="mb-12">
+				<div class="flex items-center justify-between mb-4 border-b border-[var(--color-border)] pb-2">
+					<h2 class="text-lg md:text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
+						<span>📺</span>
+						<span>مسلسلات {genreTitle}</span>
+					</h2>
+					<a href={`/tv/genre/${genre}`} class="text-xs text-[var(--color-brand)] font-semibold hover:underline">
+						عرض كل مسلسلات {genreTitle} ←
+					</a>
+				</div>
+				<div class="media-grid">
+					{tvSeries.map((t) => (
+						<MediaCard
+							title={t.data.title}
+							slug={t.id}
+							type="tv"
+							image={t.data.featured_image}
+							release={t.data.release}
+						/>
+					))}
+				</div>
+			</section>
+		)}
+
+		{movies.length === 0 && tvSeries.length === 0 && (
+			<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-12 text-center text-muted my-6">
+				لا توجد أعمال فنية مضافة في تصنيف {genreTitle} حالياً.
+			</div>
+		)}
+	</div>
+</CimaLayout>

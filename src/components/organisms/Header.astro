@@ -1,0 +1,89 @@
+---
+import QuickSearch from "./QuickSearch.astro";
+import ThemeToggle from "../atoms/ThemeToggle.astro";
+import { getSiteSettings, getMenu } from "emdash";
+
+let settings = { title: "معاك سيما" };
+let navItems: any[] = [];
+
+try {
+	const [settingsRes, primaryMenu] = await Promise.all([
+		getSiteSettings().catch(() => null),
+		getMenu("primary").catch(() => null),
+	]);
+
+	if (settingsRes?.title) settings.title = settingsRes.title;
+
+	if (primaryMenu?.items && primaryMenu.items.length > 0) {
+		navItems = primaryMenu.items;
+	} else {
+		// Fallback default navigation conforming to EmDash menus structure
+		navItems = [
+			{ label: "الرئيسية", url: "/" },
+			{ label: "الأفلام", url: "/movies" },
+			{ label: "المسلسلات", url: "/tv" },
+		];
+	}
+} catch (e) {
+	navItems = [
+		{ label: "الرئيسية", url: "/" },
+		{ label: "الأفلام", url: "/movies" },
+		{ label: "المسلسلات", url: "/tv" },
+	];
+}
+---
+
+<header class="sticky top-0 z-50 w-full bg-[var(--color-bg)]/95 backdrop-blur-md border-b border-[var(--color-border)] transition-colors duration-300">
+	<div class="md3-container">
+		<div class="flex items-center justify-between h-16 gap-4">
+			<!-- Logo & Main Nav -->
+			<div class="flex items-center gap-6">
+				<a href="/" class="flex items-center gap-2.5 group focus:outline-none">
+					<!-- Neon Cyan Play Icon Styled from Uploaded Artwork -->
+					<div class="relative w-9 h-9 rounded-xl bg-gradient-to-br from-[#00e5ff]/25 to-[#0284c7]/30 border border-[#00e5ff]/60 flex items-center justify-center text-[#00e5ff] shadow-lg shadow-[#00e5ff]/20 group-hover:shadow-[#00e5ff]/50 group-hover:scale-105 transition-all">
+						<svg class="w-5 h-5 fill-current filter drop-shadow-[0_0_8px_rgba(0,229,255,0.85)]" viewBox="0 0 24 24">
+							<path d="M8 5v14l11-7z" />
+						</svg>
+					</div>
+					<div class="flex flex-col">
+						<span class="text-xl font-black tracking-tight text-[var(--color-text)] group-hover:text-[var(--color-brand)] transition-colors">
+							{settings.title}
+						</span>
+						<span class="text-[10px] text-[var(--color-brand)] font-bold -mt-1 tracking-widest uppercase">
+							CINEMA
+						</span>
+					</div>
+				</a>
+
+				<!-- Desktop Navigation Menu Controlled via EmDash Menus -->
+				<nav class="hidden md:flex items-center gap-1.5 text-sm font-semibold text-[var(--color-text-secondary)]">
+					{navItems.map((item: any) => (
+						<a
+							href={item.url || item.href || "#"}
+							target={item.target || undefined}
+							class={`px-3 py-1.5 rounded-lg hover:text-[var(--color-text)] hover:bg-[var(--color-fill)] transition-colors ${item.classes || ""}`}
+						>
+							{item.label}
+						</a>
+					))}
+				</nav>
+			</div>
+
+			<!-- Quick Search Box (Zero JS Static Island) -->
+			<div class="flex-1 max-w-sm hidden sm:block">
+				<QuickSearch />
+			</div>
+
+			<!-- Actions: Theme Toggle (Cleaned from Categories & Admin links) -->
+			<div class="flex items-center gap-2">
+				<!-- Theme Switcher (EmDash Dark Mode Guide compliant) -->
+				<ThemeToggle />
+			</div>
+		</div>
+
+		<!-- Mobile Search Row (Zero JS Static Island) -->
+		<div class="sm:hidden pb-3">
+			<QuickSearch />
+		</div>
+	</div>
+</header>

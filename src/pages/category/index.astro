@@ -1,0 +1,155 @@
+---
+import CimaLayout from "../../layouts/CimaLayout.astro";
+import Breadcrumbs from "../../components/molecules/Breadcrumbs.astro";
+import { getTaxonomyTerms } from "emdash";
+
+let categories: any[] = [];
+
+try {
+	const catsRes = await getTaxonomyTerms("category");
+	categories = catsRes || [];
+} catch (e) {
+	console.error("Error fetching categories:", e);
+}
+
+// Fallback categories if empty
+if (categories.length === 0) {
+	categories = [
+		{ slug: "movies-arabic", label: "أفلام عربية" },
+		{ slug: "movies-foreign", label: "أفلام أجنبية مترجمة" },
+		{ slug: "series-arabic", label: "مسلسلات عربية" },
+		{ slug: "series-foreign", label: "مسلسلات أجنبية مترجمة" },
+	];
+}
+
+// Separate sections into Movie Sections and Series Sections
+const movieCategories = categories.filter((c) => c.slug.startsWith("movies") || c.slug.includes("movie"));
+const seriesCategories = categories.filter((c) => c.slug.startsWith("series") || c.slug.includes("series") || c.slug.includes("tv"));
+
+const sectionIcons: Record<string, string> = {
+	"movies-arabic": "🇪🇬",
+	"movies-foreign": "🍿",
+	"series-arabic": "🌙",
+	"series-foreign": "🌟",
+};
+---
+
+<CimaLayout
+	title="دليل الأقسام الرئيسية للأفلام والمسلسلات | معاك سيما"
+	description="تصفح أقسام الأفلام والمسلسلات العربية والأجنبية المترجمة بجودة عالية."
+>
+	<div class="md3-container pt-4">
+		<Breadcrumbs items={[{ label: "الأقسام الرئيسية" }]} />
+
+		<!-- Page Header -->
+		<div class="my-6">
+			<h1 class="text-2xl md:text-3xl font-extrabold text-[var(--color-text)] flex items-center gap-2">
+				<span>📂</span>
+				<span>دليل الأقسام الرئيسية (Categories)</span>
+			</h1>
+			<p class="text-muted text-sm mt-1">
+				الأقسام الرئيسية لمكتبة الأفلام والمسلسلات العربية والأجنبية في معاك سيما
+			</p>
+		</div>
+
+		<!-- 1. أقسام الأفلام الرئيسية -->
+		<section class="mb-12">
+			<div class="flex items-center justify-between mb-4 border-b border-[var(--color-border)] pb-2">
+				<h2 class="text-lg md:text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
+					<span>🎬</span>
+					<span>أقسام الأفلام</span>
+				</h2>
+				<a href="/movies" class="text-xs text-[var(--color-brand)] font-semibold hover:underline">
+					تصفح كل الأفلام ←
+				</a>
+			</div>
+
+			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+				{movieCategories.map((cat) => (
+					<a
+						href={`/category/${cat.slug}`}
+						class="bg-[var(--color-surface)] hover:bg-[var(--color-fill)] border border-[var(--color-border)] hover:border-[var(--color-brand)] p-6 rounded-2xl flex flex-col justify-between transition-all duration-300 group hover:shadow-xl hover:shadow-[var(--color-brand)]/10"
+					>
+						<div class="flex items-center justify-between mb-4">
+							<span class="text-3xl">
+								{sectionIcons[cat.slug] || "🎥"}
+							</span>
+							<span class="text-xs text-[var(--color-brand)] font-semibold bg-[var(--color-brand)]/10 px-3 py-1 rounded-full group-hover:bg-[var(--color-brand)] group-hover:text-white transition-colors">
+								عرض الأفلام
+							</span>
+						</div>
+						<div>
+							<h3 class="text-lg font-bold text-[var(--color-text)] group-hover:text-[var(--color-brand)] transition-colors">
+								{cat.label}
+							</h3>
+							<p class="text-xs text-muted mt-1">
+								مشاهدة وتحميل أحدث {cat.label} بدقة فائقة Full HD وسيرفرات مباشرة.
+							</p>
+						</div>
+					</a>
+				))}
+			</div>
+		</section>
+
+		<!-- 2. أقسام المسلسلات الرئيسية -->
+		<section class="mb-12">
+			<div class="flex items-center justify-between mb-4 border-b border-[var(--color-border)] pb-2">
+				<h2 class="text-lg md:text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
+					<span>📺</span>
+					<span>أقسام المسلسلات</span>
+				</h2>
+				<a href="/tv" class="text-xs text-[var(--color-brand)] font-semibold hover:underline">
+					تصفح كل المسلسلات ←
+				</a>
+			</div>
+
+			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+				{seriesCategories.map((cat) => (
+					<a
+						href={`/category/${cat.slug}`}
+						class="bg-[var(--color-surface)] hover:bg-[var(--color-fill)] border border-[var(--color-border)] hover:border-[var(--color-brand)] p-6 rounded-2xl flex flex-col justify-between transition-all duration-300 group hover:shadow-xl hover:shadow-[var(--color-brand)]/10"
+					>
+						<div class="flex items-center justify-between mb-4">
+							<span class="text-3xl">
+								{sectionIcons[cat.slug] || "📺"}
+							</span>
+							<span class="text-xs text-[var(--color-brand)] font-semibold bg-[var(--color-brand)]/10 px-3 py-1 rounded-full group-hover:bg-[var(--color-brand)] group-hover:text-white transition-colors">
+								عرض المسلسلات
+							</span>
+						</div>
+						<div>
+							<h3 class="text-lg font-bold text-[var(--color-text)] group-hover:text-[var(--color-brand)] transition-colors">
+								{cat.label}
+							</h3>
+							<p class="text-xs text-muted mt-1">
+								مشاهدة وتحميل كامل مواسم وحلقات {cat.label} مترجمة ومدبلجة.
+							</p>
+						</div>
+					</a>
+				))}
+			</div>
+		</section>
+
+		<!-- Callout to Genres Page (/genre) -->
+		<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 mb-12 flex flex-col md:flex-row items-center justify-between gap-4">
+			<div class="flex items-center gap-4">
+				<span class="text-3xl">🏷️</span>
+				<div>
+					<h3 class="text-base font-bold text-[var(--color-text)]">
+						تبحث عن التصنيفات الفنية للأعمال؟
+					</h3>
+					<p class="text-xs text-muted mt-0.5">
+						تصفح الأفلام والمسلسلات مصنفة حسب النوع الفني: أكشن، دراما، كوميديا، تشويق، رعب، تاريخي...
+					</p>
+				</div>
+			</div>
+			<a
+				href="/genre"
+				class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--color-brand)] text-[var(--color-on-brand)] text-xs md:text-sm font-bold shadow-md hover:opacity-90 transition-opacity shrink-0"
+			>
+				<span>دليل التصنيفات الفنية</span>
+				<span>←</span>
+			</a>
+		</div>
+	</div>
+</CimaLayout>

@@ -1,0 +1,35 @@
+---
+// HorizontalRail.astro - Pure CSS Responsive Grid Section (Tailwind 4 + Material Design 3)
+interface Props {
+	title: string;
+	icon?: string;
+	viewAllHref?: string;
+}
+
+const { title, icon = "🎬", viewAllHref } = Astro.props;
+---
+
+<section class="mb-12 w-full">
+	<!-- Section Header -->
+	<div class="flex items-center justify-between mb-5 border-b border-[var(--color-border)] pb-3">
+		<h2 class="text-lg md:text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
+			{icon && <span class="text-xl">{icon}</span>}
+			<span>{title}</span>
+		</h2>
+
+		{viewAllHref && (
+			<a
+				href={viewAllHref}
+				class="text-xs md:text-sm font-bold text-[var(--color-brand)] hover:underline flex items-center gap-1.5 transition-colors group"
+			>
+				<span>عرض الكل</span>
+				<span class="transition-transform group-hover:-translate-x-1">←</span>
+			</a>
+		)}
+	</div>
+
+	<!-- Pure Grid Layout (Tailwind 4 + Material Design 3 Responsive) -->
+	<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3.5 sm:gap-4 md:gap-5">
+		<slot />
+	</div>
+</section>

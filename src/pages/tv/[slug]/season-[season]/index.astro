@@ -1,0 +1,233 @@
+---
+import CimaLayout from "../../../../layouts/CimaLayout.astro";
+import Breadcrumbs from "../../../../components/molecules/Breadcrumbs.astro";
+import Badge from "../../../../components/atoms/Badge.astro";
+import { getEmDashEntry } from "emdash";
+
+const { slug, season: seasonParam } = Astro.params;
+const seasonNum = parseInt(seasonParam ?? "1", 10);
+
+if (!slug || isNaN(seasonNum)) {
+	return Astro.redirect("/tv");
+}
+
+let tvEntry: any = null;
+let seasonEntry: any = null;
+let episodesList: any[] = [];
+
+try {
+	// 1. جلب المسلسل مع قائمة مواسمه (Hierarchical References)
+	const tvRes = await getEmDashEntry("tv", slug, {
+		references: { seasons: { limit: 20 } },
+	}).catch(() => null);
+
+	tvEntry = tvRes?.entry ?? null;
+
+	if (!tvEntry) {
+		return Astro.redirect(`/tv`);
+	}
+
+	// 2. البحث عن الموسم المطلوب في مواسم المسلسل
+	const rawSeasons: any[] = tvEntry?.references?.seasons?.entries ?? [];
+
+	const matchedSeason = rawSeasons.find(
+		(s: any) =>
+			s.data?.season_number === seasonNum ||
+			s.id.endsWith(`season-${seasonNum}`)
+	) ?? rawSeasons[0];
+
+	if (!matchedSeason) {
+		return Astro.redirect(`/tv/${slug}`);
+	}
+
+	// 3. جلب الموسم الكامل مع حلقاته (Hierarchical References)
+	const seasonRes = await getEmDashEntry("seasons", matchedSeason.id, {
+		references: { episodes: { limit: 100 } },
+	}).catch(() => null);
+
+	seasonEntry = seasonRes?.entry ?? matchedSeason;
+
+	// 4. الحلقات من References API
+	episodesList = (seasonEntry?.references?.episodes?.entries ?? [])
+		.sort((a: any, b: any) => (a.data?.episode_number ?? 0) - (b.data?.episode_number ?? 0));
+
+} catch (e) {
+	console.error("Error fetching season page:", e);
+}
+
+if (!tvEntry || !seasonEntry) {
+	return Astro.redirect(`/tv/${slug}`);
+}
+
+const series = tvEntry.data;
+const season = seasonEntry.data;
+
+const posterUrl =
+	typeof season.featured_image === "string"
+		? season.featured_image
+		: season.featured_image?.src ??
+			(typeof series.featured_image === "string"
+				? series.featured_image
+				: series.featured_image?.src) ??
+			"https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=800&h=1200&fit=crop";
+
+const pageTitle = `مسلسل ${series.title} – الموسم ${seasonNum} | معاك سيما`;
+const canonicalUrl = new URL(`/tv/${slug}/season-${seasonNum}`, Astro.site ?? Astro.url.origin).href;
+
+// Schema.org TVSeason — partOfSeries هو البديل الموصى به حالياً
+const seasonSchema = {
+	"@context": "https://schema.org",
+	"@type": "TVSeason",
+	"name": season.title ?? `الموسم ${seasonNum}`,
+	"seasonNumber": seasonNum,
+	"numberOfEpisodes": episodesList.length,
+	"description": season.excerpt ?? series.excerpt,
+	"image": posterUrl,
+	"url": canonicalUrl,
+	"partOfSeries": {
+		"@type": "TVSeries",
+		"name": series.title,
+		"url": new URL(`/tv/${slug}`, Astro.site ?? Astro.url.origin).href,
+	},
+};
+---
+
+<CimaLayout
+	title={pageTitle}
+	description={season.excerpt ?? series.excerpt}
+	image={posterUrl}
+	type="video.tv_show"
+>
+	<div class="md3-container pt-3">
+		<!-- Breadcrumbs (هرمي) -->
+		<Breadcrumbs
+			items={[
+				{ label: "المسلسلات", href: "/tv" },
+				{ label: series.title, href: `/tv/${slug}` },
+				{ label: `الموسم ${seasonNum}` },
+			]}
+		/>
+
+		<!-- Season Banner Card -->
+		<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 md:p-6 my-6 shadow-xl transition-colors">
+			<div class="flex flex-col md:flex-row gap-6">
+				<!-- Season Poster -->
+				<div class="w-full md:w-52 shrink-0 flex flex-col items-center">
+					<div class="relative w-44 md:w-full aspect-[2/3] rounded-xl overflow-hidden shadow-2xl border border-[var(--color-border-strong)] skeleton-shimmer">
+						<img
+							src={posterUrl}
+							alt={season.title ?? `الموسم ${seasonNum}`}
+							class="w-full h-full object-cover relative z-10"
+							loading="eager"
+						/>
+						<div class="absolute top-2 right-2 z-20">
+							<Badge variant="brand">الموسم {seasonNum}</Badge>
+						</div>
+					</div>
+				</div>
+
+				<!-- Season Details -->
+				<div class="flex-1 flex flex-col justify-start">
+					<h1 class="text-xl md:text-3xl font-extrabold text-[var(--color-text)] tracking-wide">
+						{series.title} – الموسم {seasonNum}
+					</h1>
+
+					<!-- رابط المسلسل الأصلي (Back to Series) -->
+					<a
+						href={`/tv/${slug}`}
+						class="inline-flex items-center gap-1.5 mt-2 mb-3 text-xs font-semibold text-[var(--color-brand)] hover:underline w-fit"
+					>
+						<span>⬅</span>
+						<span>العودة لصفحة المسلسل الكاملة</span>
+					</a>
+
+					<div class="flex flex-wrap items-center gap-3 my-2 text-xs md:text-sm text-[var(--color-text-secondary)]">
+						{season.release && (
+							<span class="flex items-center gap-1 font-semibold text-[var(--color-text)] bg-[var(--color-fill)] px-2.5 py-1 rounded-md border border-[var(--color-border)]">
+								📅 {season.release}
+							</span>
+						)}
+						<span class="flex items-center gap-1 bg-[var(--color-fill)] px-2.5 py-1 rounded-md border border-[var(--color-border)] text-[var(--color-text)]">
+							⚡ {episodesList.length} {episodesList.length === 1 ? "حلقة" : "حلقات"}
+						</span>
+					</div>
+
+					{(season.excerpt ?? series.excerpt) && (
+						<div class="border-t border-[var(--color-border)] pt-4 my-2">
+							<h3 class="text-sm font-bold text-[var(--color-text)] mb-1 flex items-center gap-1.5">
+								<span>📖</span>
+								<span>ملخص أحداث هذا الموسم:</span>
+							</h3>
+							<p class="text-[var(--color-text-secondary)] text-sm leading-relaxed">
+								{season.excerpt ?? series.excerpt}
+							</p>
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+
+		<!-- Episodes Vertical List (عرض رأسي بدون صور) -->
+		<div class="my-8">
+			<div class="flex items-center justify-between mb-4">
+				<h2 class="text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
+					<span>⚡</span>
+					<span>حلقات الموسم {seasonNum}</span>
+				</h2>
+				<span class="text-xs text-muted font-medium bg-[var(--color-fill)] px-3 py-1 rounded-full border border-[var(--color-border)]">
+					{episodesList.length} حلقة
+				</span>
+			</div>
+
+			{episodesList.length === 0 ? (
+				<div class="text-center py-16 text-[var(--color-text-secondary)] text-sm">
+					لا توجد حلقات متاحة حالياً لهذا الموسم.
+				</div>
+			) : (
+				<div class="flex flex-col gap-2.5 max-w-4xl">
+					{episodesList.map((ep) => {
+						const epNum = ep.data?.episode_number ?? 1;
+						const href = `/tv/${slug}/season-${seasonNum}/episode-${epNum}`;
+						return (
+							<a
+								href={href}
+								class="flex items-center justify-between p-3.5 md:p-4 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-brand)] hover:bg-[var(--color-fill)] hover:shadow-md transition-all group"
+							>
+								<div class="flex items-center gap-3.5">
+									<div class="w-10 h-10 rounded-lg bg-[var(--color-fill-strong)] flex items-center justify-center text-[var(--color-brand)] group-hover:bg-[var(--color-brand)] group-hover:text-[var(--color-on-brand)] transition-colors shrink-0">
+										<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+											<path d="M8 5v14l11-7z" />
+										</svg>
+									</div>
+									<div class="flex flex-col">
+										<span class="font-bold text-sm md:text-base text-[var(--color-text)] group-hover:text-[var(--color-brand)] transition-colors">
+											الحلقة {epNum}
+										</span>
+										{ep.data?.title && ep.data.title !== `الحلقة ${epNum}` && (
+											<span class="text-xs text-[var(--color-text-secondary)] mt-0.5 line-clamp-1">
+												{ep.data.title}
+											</span>
+										)}
+									</div>
+								</div>
+								<div class="flex items-center gap-3 shrink-0">
+									{ep.data?.duration && (
+										<span class="text-xs text-[var(--color-text-secondary)] hidden sm:inline">
+											⏳ {ep.data.duration} د
+										</span>
+									)}
+									<span class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[var(--color-fill)] text-[var(--color-brand)] border border-[var(--color-border)] group-hover:border-[var(--color-brand)] group-hover:bg-[var(--color-brand)] group-hover:text-[var(--color-on-brand)] transition-colors whitespace-nowrap">
+										مشاهدة ←
+									</span>
+								</div>
+							</a>
+						);
+					})}
+				</div>
+			)}
+		</div>
+
+		<!-- Schema.org TVSeason Structured Data -->
+		<script type="application/ld+json" set:html={JSON.stringify(seasonSchema)} />
+	</div>
+</CimaLayout>

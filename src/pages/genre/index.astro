@@ -1,0 +1,148 @@
+---
+import CimaLayout from "../../layouts/CimaLayout.astro";
+import Breadcrumbs from "../../components/molecules/Breadcrumbs.astro";
+import { getTaxonomyTerms } from "emdash";
+
+let movieGenres: any[] = [];
+let tvGenres: any[] = [];
+
+try {
+	const [mGenresRes, tGenresRes] = await Promise.all([
+		getTaxonomyTerms("movie_genre").catch(() => getTaxonomyTerms("genre")),
+		getTaxonomyTerms("tv_genre").catch(() => getTaxonomyTerms("genre")),
+	]);
+	movieGenres = mGenresRes || [];
+	tvGenres = tGenresRes || [];
+} catch (e) {
+	console.error("Error fetching genres:", e);
+}
+
+// Fallback genres if database returned empty
+if (movieGenres.length === 0) {
+	movieGenres = [
+		{ slug: "action", label: "أكشن" },
+		{ slug: "adventure", label: "مغامرة" },
+		{ slug: "comedy", label: "كوميديا" },
+		{ slug: "drama", label: "دراما" },
+		{ slug: "thriller", label: "تشويق وإثارة" },
+		{ slug: "crime", label: "جريمة" },
+		{ slug: "history", label: "تاريخي" },
+		{ slug: "war", label: "حرب" },
+		{ slug: "sci-fi", label: "خيال علمي" },
+		{ slug: "horror", label: "رعب" },
+		{ slug: "fantasy", label: "فانتازيا" },
+	];
+}
+
+if (tvGenres.length === 0) {
+	tvGenres = [
+		{ slug: "drama", label: "دراما" },
+		{ slug: "crime", label: "جريمة" },
+		{ slug: "thriller", label: "تشويق وإثارة" },
+		{ slug: "action", label: "أكشن" },
+		{ slug: "history", label: "تاريخي" },
+		{ slug: "comedy", label: "كوميديا" },
+		{ slug: "mystery", label: "غموض" },
+	];
+}
+---
+
+<CimaLayout
+	title="دليل التصنيفات الفنية للأفلام والمسلسلات | معاك سيما"
+	description="تصفح الأفلام والمسلسلات مصنفة بدقة حسب النوع الفني: أكشن، دراما، كوميديا، تشويق، رعب، تاريخي، وغيرها."
+>
+	<div class="md3-container pt-4">
+		<Breadcrumbs items={[{ label: "التصنيفات الفنية" }]} />
+
+		<!-- Page Header -->
+		<div class="my-6">
+			<h1 class="text-2xl md:text-3xl font-extrabold text-[var(--color-text)] flex items-center gap-2">
+				<span>🏷️</span>
+				<span>دليل التصنيفات الفنية (Genres)</span>
+			</h1>
+			<p class="text-muted text-sm mt-1">
+				اختر تصنيفك المفضل وتصفح كل ما هو جديد من أفلام ومسلسلات عربية وعالمية
+			</p>
+		</div>
+
+		<!-- 1. تصنيفات الأفلام الفنية (Movie Genres) -->
+		<section class="mb-12">
+			<div class="flex items-center justify-between mb-4 border-b border-[var(--color-border)] pb-2">
+				<h2 class="text-lg md:text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
+					<span>🎬</span>
+					<span>تصنيفات الأفلام الفنية</span>
+				</h2>
+				<a href="/movies" class="text-xs text-[var(--color-brand)] font-semibold hover:underline">
+					تصفح كل الأفلام ←
+				</a>
+			</div>
+
+			<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+				{movieGenres.map((g) => (
+					<a
+						href={`/movies/genre/${g.slug}`}
+						class="bg-[var(--color-surface)] hover:bg-[var(--color-fill)] border border-[var(--color-border)] hover:border-[var(--color-brand)] p-4 rounded-xl text-center transition-all group hover:shadow-lg hover:shadow-[var(--color-brand)]/10"
+					>
+						<span class="text-base font-bold text-[var(--color-text)] group-hover:text-[var(--color-brand)] block mb-1 transition-colors">
+							{g.label}
+						</span>
+						<span class="text-xs text-muted group-hover:text-[var(--color-brand)] transition-colors">
+							أفلام {g.label}
+						</span>
+					</a>
+				))}
+			</div>
+		</section>
+
+		<!-- 2. تصنيفات المسلسلات الفنية (Series Genres) -->
+		<section class="mb-12">
+			<div class="flex items-center justify-between mb-4 border-b border-[var(--color-border)] pb-2">
+				<h2 class="text-lg md:text-xl font-bold text-[var(--color-text)] flex items-center gap-2">
+					<span>📺</span>
+					<span>تصنيفات المسلسلات الفنية</span>
+				</h2>
+				<a href="/tv" class="text-xs text-[var(--color-brand)] font-semibold hover:underline">
+					تصفح كل المسلسلات ←
+				</a>
+			</div>
+
+			<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+				{tvGenres.map((g) => (
+					<a
+						href={`/tv/genre/${g.slug}`}
+						class="bg-[var(--color-surface)] hover:bg-[var(--color-fill)] border border-[var(--color-border)] hover:border-[var(--color-brand)] p-4 rounded-xl text-center transition-all group hover:shadow-lg hover:shadow-[var(--color-brand)]/10"
+					>
+						<span class="text-base font-bold text-[var(--color-text)] group-hover:text-[var(--color-brand)] block mb-1 transition-colors">
+							{g.label}
+						</span>
+						<span class="text-xs text-muted group-hover:text-[var(--color-brand)] transition-colors">
+							مسلسلات {g.label}
+						</span>
+					</a>
+				))}
+			</div>
+		</section>
+
+		<!-- Callout to Categories Page (/category) -->
+		<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 mb-12 flex flex-col md:flex-row items-center justify-between gap-4">
+			<div class="flex items-center gap-4">
+				<span class="text-3xl">📂</span>
+				<div>
+					<h3 class="text-base font-bold text-[var(--color-text)]">
+						تبحث عن الأقسام الرئيسية (أفلام عربية، مسلسلات عربية، مترجمة)؟
+					</h3>
+					<p class="text-xs text-muted mt-0.5">
+						تصفح الأقسام الكبرى المنظمة للمحتوى في دليل الأقسام الرئيسي
+					</p>
+				</div>
+			</div>
+			<a
+				href="/category"
+				class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--color-brand)] text-[var(--color-on-brand)] text-xs md:text-sm font-bold shadow-md hover:opacity-90 transition-opacity shrink-0"
+			>
+				<span>دليل الأقسام</span>
+				<span>←</span>
+			</a>
+		</div>
+	</div>
+</CimaLayout>

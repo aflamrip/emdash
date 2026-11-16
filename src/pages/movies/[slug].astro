@@ -1,0 +1,388 @@
+---
+import CimaLayout from "../../layouts/CimaLayout.astro";
+import VideoPlayer from "../../components/molecules/VideoPlayer.svelte";
+import Breadcrumbs from "../../components/molecules/Breadcrumbs.astro";
+import HorizontalRail from "../../components/molecules/HorizontalRail.astro";
+import MediaCard from "../../components/molecules/MediaCard.astro";
+import Chip from "../../components/atoms/Chip.astro";
+import Badge from "../../components/atoms/Badge.astro";
+import { Comments, CommentForm } from "emdash/ui/comments";
+import { getEmDashEntry, getEntryTerms, getEntriesByTerm, getEmDashCollection } from "emdash";
+import seedData from "../../../seed/seed.json";
+
+const { slug } = Astro.params;
+if (!slug) {
+	return Astro.redirect("/movies");
+}
+
+let movieEntry: any = null;
+let terms: any[] = [];
+let similarMovies: any[] = [];
+let directorPerson: any = null;
+let castPeople: any[] = [];
+let categoryTerms: any[] = [];
+let genreTerms: any[] = [];
+
+try {
+	const res = await getEmDashEntry("movies", slug, {
+		references: { director: true, peoples: true },
+	}).catch(() => getEmDashEntry("movies", slug));
+	movieEntry = res.entry;
+
+	if (movieEntry?.data?.id) {
+		terms = await getEntryTerms("movies", movieEntry.data.id);
+	}
+
+	// Separate Category (القسم) from Genres (التصنيف الفني)
+	categoryTerms = terms.filter((t: any) => t.name === "category");
+	genreTerms = terms.filter((t: any) => t.name === "genre" || t.name === "movie_genre");
+
+	if (categoryTerms.length === 0) {
+		const isArabic = slug.includes("ameer") || slug.includes("welad") || slug.includes("asad");
+		categoryTerms = [{
+			name: "category",
+			slug: isArabic ? "movies-arabic" : "movies-foreign",
+			label: isArabic ? "أفلام عربية" : "أفلام أجنبية مترجمة",
+		}];
+	}
+	if (genreTerms.length === 0) {
+		genreTerms = [{
+			name: "genre",
+			slug: "action",
+			label: "أكشن",
+		}];
+	}
+
+	// Fetch similar movies from same genre if available
+	const genreTerm = genreTerms[0];
+	if (genreTerm) {
+		const simRes = await getEntriesByTerm("movies", genreTerm.name, genreTerm.slug).catch(() => []);
+		similarMovies = (Array.isArray(simRes) ? simRes : []).filter((m: any) => m.id !== slug);
+	} else {
+		const allMovies = await getEmDashCollection("movies", { limit: 8 }).catch(() => ({ entries: [] }));
+		similarMovies = (allMovies.entries || []).filter((m: any) => m.id !== slug);
+	}
+
+	// Fetch People collection for crew/cast lookup
+	const allPeople: any = await getEmDashCollection("people", { limit: 100 }).catch(() => ({ entries: [] }));
+	let peopleList: any[] = [...(allPeople.entries || [])];
+
+	// Ensure seed people are in the list for reference
+	const seedPeople: any[] = seedData?.content?.people || [];
+	for (const sp of seedPeople) {
+		if (!peopleList.some((p: any) => p.id === sp.slug || p.id === sp.id || p.data?.id === sp.id)) {
+			peopleList.push({
+				id: sp.slug,
+				data: { id: sp.id, title: sp.data.title, photo: sp.data.photo, bio: sp.data.bio }
+			});
+		}
+	}
+
+	// Official EmDash references API resolution
+	if (!directorPerson && movieEntry?.references?.director?.entries?.length) {
+		directorPerson = movieEntry.references.director.entries[0];
+	}
+	if (castPeople.length === 0 && movieEntry?.references?.peoples?.entries?.length) {
+		castPeople = movieEntry.references.peoples.entries;
+	}
+
+	// Director and Cast references fallback resolution
+	let directorRef = movieEntry?.data?.director;
+	let peoplesRefs = movieEntry?.data?.peoples;
+
+	// Fallback to seed definition if references are empty on entry
+	if (!directorRef || !peoplesRefs) {
+		const seedMovie = seedData?.content?.movies?.find((m: any) => m.slug === slug || m.id === slug);
+		if (seedMovie) {
+			if (!directorRef && seedMovie.data?.director) directorRef = seedMovie.data.director;
+			if (!peoplesRefs && seedMovie.data?.peoples) peoplesRefs = seedMovie.data.peoples;
+		}
+	}
+
+	if (directorRef) {
+		directorPerson = peopleList.find(
+			(p: any) =>
+				p.data?.id === directorRef ||
+				p.id === directorRef ||
+				(typeof directorRef === "string" && (directorRef.includes(p.id) || (p.data?.id && directorRef.includes(p.data.id))))
+		);
+	}
+
+	const refsArray = Array.isArray(peoplesRefs) ? peoplesRefs : [peoplesRefs].filter(Boolean);
+	castPeople = peopleList.filter((p: any) =>
+		refsArray.some(
+			(r: any) =>
+				r === p.data?.id ||
+				r === p.id ||
+				(typeof r === "string" && (r.includes(p.id) || (p.data?.id && r.includes(p.data.id))))
+		)
+	);
+} catch (e) {
+	console.error("Error fetching movie detail:", e);
+}
+
+if (!movieEntry) {
+	return Astro.redirect("/404");
+}
+
+const movie = movieEntry.data;
+const posterUrl =
+	typeof movie.featured_image === "string"
+		? movie.featured_image
+		: movie.featured_image?.src ||
+			"https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&h=1200&fit=crop";
+
+const videoSrc = movie.video || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+const subtitleSrc = movie.subtitle || "https://raw.githubusercontent.com/videojs/video.js/main/docs/guides/subtitles-sample.vtt";
+const pageTitle = `مشاهدة فيلم ${movie.title} (${movie.release || "2026"}) مترجم اون لاين`;
+
+// Schema.org Movie & VideoObject Structured Data
+const canonicalUrl = new URL(`/movies/${slug}`, Astro.site ?? Astro.url.origin).href;
+const movieSchema = {
+	"@context": "https://schema.org",
+	"@type": "Movie",
+	"name": movie.title,
+	"description": movie.excerpt,
+	"image": posterUrl,
+	"url": canonicalUrl,
+	"dateCreated": movie.release,
+	"inLanguage": "ar",
+	"duration": movie.duration ? `PT${movie.duration}M` : undefined,
+	...(directorPerson ? {
+		"director": {
+			"@type": "Person",
+			"name": directorPerson.data?.title,
+			"url": new URL(`/people/${directorPerson.id}`, Astro.site ?? Astro.url.origin).href,
+		}
+	} : {}),
+	"actor": castPeople.map((actor: any) => ({
+		"@type": "Person",
+		"name": actor.data?.title,
+		"url": new URL(`/people/${actor.id}`, Astro.site ?? Astro.url.origin).href,
+	})),
+	"video": {
+		"@type": "VideoObject",
+		"name": movie.title,
+		"description": movie.excerpt,
+		"thumbnailUrl": posterUrl,
+		"contentUrl": videoSrc,
+		"embedUrl": canonicalUrl,
+		"duration": movie.duration ? `PT${movie.duration}M` : undefined,
+		"uploadDate": movieEntry.data.createdAt instanceof Date
+			? movieEntry.data.createdAt.toISOString()
+			: (movieEntry.data.created_at ?? new Date().toISOString()),
+		"inLanguage": "ar",
+	},
+};
+---
+
+<CimaLayout
+	title={pageTitle}
+	description={movie.excerpt}
+	image={posterUrl}
+	type="video.movie"
+	content={{ collection: "movies", id: movieEntry.data.id, slug }}
+>
+	<div class="md3-container pt-3">
+		<!-- Breadcrumbs -->
+		<Breadcrumbs
+			items={[
+				{ label: "الأفلام", href: "/movies" },
+				{ label: movie.title },
+			]}
+		/>
+
+		<!-- Video Player at Top (Deferred client:idle for optimal PageSpeed TBT & INP) -->
+		<div class="w-full my-4">
+			<VideoPlayer
+				client:idle
+				src={videoSrc}
+				poster={posterUrl}
+				subtitle={subtitleSrc}
+				title={pageTitle}
+			/>
+		</div>
+
+		<!-- Movie Information Card -->
+		<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-4 md:p-6 my-6 shadow-xl transition-colors" {...movieEntry.edit}>
+			<div class="flex flex-col md:flex-row gap-6">
+				<!-- Vertical Poster Column -->
+				<div class="w-full md:w-56 shrink-0 flex flex-col items-center">
+					<div class="relative w-48 md:w-full aspect-[2/3] rounded-xl overflow-hidden shadow-2xl border border-[var(--color-border-strong)] skeleton-shimmer">
+						<img
+							src={posterUrl}
+							alt={movie.title}
+							width={300}
+							height={450}
+							loading="eager"
+							decoding="sync"
+							fetchpriority="high"
+							class="w-full h-full object-cover relative z-10"
+						/>
+						<div class="absolute top-2 right-2 z-20">
+							<Badge variant="brand">1080p</Badge>
+						</div>
+					</div>
+				</div>
+
+				<!-- Movie Details Column -->
+				<div class="flex-1 flex flex-col justify-start">
+					<!-- Title & Year -->
+					<h1 class="text-xl md:text-3xl font-extrabold text-[var(--color-text)] tracking-wide" {...movieEntry.edit?.title}>
+						{pageTitle}
+					</h1>
+
+					<!-- Meta Badges (Rating completely removed as requested) -->
+					<div class="flex flex-wrap items-center gap-3 my-3 text-xs md:text-sm text-[var(--color-text-secondary)]">
+						{movie.release && (
+							<span class="flex items-center gap-1 font-semibold text-[var(--color-text)] bg-[var(--color-fill)] px-2.5 py-1 rounded-md border border-[var(--color-border)]">
+								📅 {movie.release}
+							</span>
+						)}
+						{movie.duration && (
+							<span class="flex items-center gap-1 bg-[var(--color-fill)] px-2.5 py-1 rounded-md border border-[var(--color-border)] text-[var(--color-text)]">
+								⏳ {movie.duration} دقيقة
+							</span>
+						)}
+						<span class="bg-[var(--color-fill)] px-2.5 py-1 rounded-md border border-[var(--color-border)] text-xs text-muted">
+							Full HD 1080p
+						</span>
+					</div>
+
+					<!-- Category / Section (القسم) -->
+					{categoryTerms.length > 0 && (
+						<div class="flex flex-wrap items-center gap-2 mb-3">
+							<span class="text-xs text-[var(--color-text-secondary)] font-semibold">القسم:</span>
+							{categoryTerms.map((cat: any) => (
+								<Chip href={`/category/${cat.slug}`}>
+									📁 {cat.label}
+								</Chip>
+							))}
+						</div>
+					)}
+
+					<!-- Genres / Type (التصنيف الفني) -->
+					{genreTerms.length > 0 && (
+						<div class="flex flex-wrap items-center gap-2 mb-4">
+							<span class="text-xs text-[var(--color-text-secondary)] font-semibold">التصنيف الفني:</span>
+							{genreTerms.map((g: any) => (
+								<Chip href={`/movies/genre/${g.slug}`}>
+									🏷️ {g.label}
+								</Chip>
+							))}
+						</div>
+					)}
+
+					<!-- Synopsis / Story -->
+					<div class="border-t border-[var(--color-border)] pt-4 mb-4">
+						<h3 class="text-sm font-bold text-[var(--color-text)] mb-1.5 flex items-center gap-1.5">
+							<span>📖</span>
+							<span>قصة الفيلم:</span>
+						</h3>
+						<p class="text-[var(--color-text-secondary)] text-sm leading-relaxed" {...movieEntry.edit?.excerpt}>
+							{movie.excerpt || "تدور أحداث الفيلم في إطار تشويقي مثير يحبس الأنفاس، متناولاً صراعات ملحمية وتحديات كبرى تحبس الأنفاس بجودة عالية وبدون تقطيع."}
+						</p>
+					</div>
+
+					<!-- Cast & Crew (طاقم العمل) Styled exactly as user uploaded screenshot -->
+					<div class="border-t border-[var(--color-border)] pt-5">
+						<div class="flex items-center gap-2 mb-3">
+							<span class="text-base md:text-lg font-bold text-[var(--color-text)]">طاقم العمل</span>
+							<svg class="w-5 h-5 text-[var(--color-brand)] stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+							</svg>
+						</div>
+
+						<div class="flex flex-wrap items-center gap-2.5">
+							{directorPerson && (
+								<a
+									href={`/people/${directorPerson.id}`}
+									class="inline-flex items-center px-4 py-2 rounded-xl bg-[var(--color-fill-strong)] hover:bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-brand)] text-xs md:text-sm font-semibold text-[var(--color-text)] hover:text-[var(--color-brand)] transition-all shadow-sm"
+								>
+									<span>إخراج: {directorPerson.data?.title || directorPerson.data?.name || "المخرج"}</span>
+								</a>
+							)}
+
+							{castPeople.map((person) => (
+								<a
+									href={`/people/${person.id}`}
+									class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-fill)] hover:bg-[var(--color-fill-strong)] border border-[var(--color-border)] hover:border-[var(--color-brand)] text-xs md:text-sm font-medium text-[var(--color-text)] hover:text-[var(--color-brand)] transition-all shadow-sm group"
+								>
+									<span>{person.data?.title || person.data?.name}</span>
+									<svg class="w-4 h-4 text-[var(--color-muted)] group-hover:text-[var(--color-brand)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+									</svg>
+								</a>
+							))}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- EmDash Default Comments Section -->
+		<section class="my-10 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 md:p-8 shadow-sm comments-container">
+			<div class="flex items-center gap-2 mb-6 border-b border-[var(--color-border)] pb-3">
+				<span class="text-xl">💬</span>
+				<h2 class="text-lg md:text-xl font-bold text-[var(--color-text)]">
+					آراء وتعليقات المشاهدين
+				</h2>
+			</div>
+
+			<Comments
+				collection="movies"
+				contentId={movieEntry.data.id}
+				threaded
+				labels={{
+					heading: (count) => (count === 0 ? "لا توجد تعليقات بعد، كن أول من يشارك برأيه!" : count === 1 ? "تعليق واحد" : count === 2 ? "تعليقان" : `${count} تعليقات`),
+					member: "عضو",
+					like: "إعجاب",
+				}}
+			/>
+
+			<div class="mt-8 pt-6 border-t border-[var(--color-border)]">
+				<h3 class="text-sm font-bold text-[var(--color-text)] mb-4">
+					أضف تعليقك على الفيلم:
+				</h3>
+				<CommentForm
+					collection="movies"
+					contentId={movieEntry.data.id}
+					labels={{
+						name: "الاسم",
+						email: "البريد الإلكتروني",
+						comment: "اكتب تعليقك أو مراجعتك للفيلم هنا...",
+						submit: "إرسال التعليق",
+						submitting: "جاري الإرسال...",
+						published: "تم نشر تعليقك بنجاح",
+						pending: "تم إرسال تعليقك وسيظهر بعد المراجعة",
+						error: "تعذر إرسال التعليق، يرجى المحاولة لاحقاً.",
+						networkError: "خطأ في الشبكة، يرجى إعادة المحاولة.",
+					}}
+				/>
+			</div>
+		</section>
+
+		<!-- Similar Movies Rail (Zero-JS Full Width Horizontal Rail) -->
+		{similarMovies.length > 0 && (
+			<HorizontalRail
+				title="🎬 أفلام مشابهة قد تعجبك"
+				icon="🔥"
+				viewAllHref="/movies"
+			>
+				{similarMovies.map((simMovie) => (
+					<MediaCard
+						title={simMovie.data.title}
+						slug={simMovie.id}
+						type="movie"
+						image={simMovie.data.featured_image}
+						release={simMovie.data.release}
+						duration={simMovie.data.duration}
+					/>
+				))}
+			</HorizontalRail>
+		)}
+
+		<!-- Schema.org Movie & VideoObject Structured Data -->
+		<script type="application/ld+json" set:html={JSON.stringify(movieSchema)} />
+	</div>
+</CimaLayout>

@@ -1,194 +1,219 @@
 ---
-import {
-	getEmDashCollection,
-	getTermsForEntries,
-	getSiteSettings,
-} from "emdash";
-import Base from "../layouts/Base.astro";
-import PostCard from "../components/PostCard.astro";
-import { resolveBlogSiteIdentity } from "../utils/site-identity";
+import CimaLayout from "../layouts/CimaLayout.astro";
+import HorizontalRail from "../components/molecules/HorizontalRail.astro";
+import MediaCard from "../components/molecules/MediaCard.astro";
+import EpisodeCard from "../components/molecules/EpisodeCard.astro";
+import { getEmDashCollection, getEntriesByTerm, getTaxonomyTerms } from "emdash";
 
-// Limit to what we render (1 featured + 6 grid). The DB does the slicing
-// instead of fetching every post and discarding the tail in JS.
-const POSTS_PER_PAGE = 7;
+// Icon mapping for genres
+const genreIcons: Record<string, string> = {
+	action: "💥",
+	adventure: "🧭",
+	drama: "🎭",
+	comedy: "😂",
+	crime: "🕵️",
+	thriller: "⚡",
+	horror: "👻",
+	romance: "💖",
+	fantasy: "🏰",
+	mystery: "🔍",
+	family: "👨‍👩‍👧‍👦",
+	history: "📜",
+	war: "⚔️",
+	"sci-fi": "🚀",
+};
 
-const [{ entries: posts, cacheHint }, settings] = await Promise.all([
-	getEmDashCollection("posts", {
-		orderBy: { published_at: "desc" },
-		limit: POSTS_PER_PAGE + 1, // +1 to detect "view all" need
-	}),
-	getSiteSettings(),
-]);
-const { siteTitle, siteTagline } = resolveBlogSiteIdentity(settings);
+// Fetch Movies, TV, Episodes, and All Genre Sections
+let movies: any[] = [];
+let tvSeries: any[] = [];
+let episodesWithSeries: any[] = [];
+let movieGenreSections: { slug: string; label: string; entries: any[] }[] = [];
+let tvGenreSections: { slug: string; label: string; entries: any[] }[] = [];
 
-if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+try {
+	const [moviesRes, tvRes, epRes, allGenresRes] = await Promise.all([
+		getEmDashCollection("movies", { limit: 14, orderBy: { created_at: "desc" } }),
+		getEmDashCollection("tv", { limit: 14, orderBy: { created_at: "desc" } }),
+		getEmDashCollection("episodes", { limit: 12, orderBy: { created_at: "desc" } }),
+		getTaxonomyTerms("genre").catch(() => []),
+	]);
 
-// Trim the lookahead post used to detect overflow
-const visiblePosts = posts.slice(0, POSTS_PER_PAGE);
-const hasMorePosts = posts.length > POSTS_PER_PAGE;
+	movies = moviesRes.entries || [];
+	tvSeries = tvRes.entries || [];
+	const rawEpisodes = epRes.entries || [];
+	const allGenres = Array.isArray(allGenresRes) ? allGenresRes : [];
 
-// Find the first post with a featured image for the hero
-const featuredPost = visiblePosts.find((p) => p.data.featured_image);
-const featuredIndex = featuredPost ? visiblePosts.indexOf(featuredPost) : -1;
+	if (Astro.cache?.enabled) {
+		if (moviesRes.cacheHint) Astro.cache.set(moviesRes.cacheHint);
+		if (tvRes.cacheHint) Astro.cache.set(tvRes.cacheHint);
+		if (epRes.cacheHint) Astro.cache.set(epRes.cacheHint);
+	}
 
-// Get remaining posts (exclude featured if found, limit to 6 for grid)
-const gridPosts = visiblePosts
-	.filter((_, i) => i !== featuredIndex)
-	.slice(0, 6);
+	// Map each episode to its parent series using slug prefix matching
+	episodesWithSeries = rawEpisodes.map((ep: any) => {
+		const matchedSeries = tvSeries.find((t: any) => ep.id.startsWith(t.id + "-"));
+		const series = matchedSeries ?? tvSeries[0];
+		const seasonMatch = ep.id.match(/season-(\d+)/);
+		const seasonNumber = seasonMatch ? parseInt(seasonMatch[1], 10) : 1;
 
-// Single batched query for tags across the featured post + grid posts.
-// Avoids the N+1 pattern of calling getEntryTerms() per entry.
-// Bylines are already hydrated on entry.data.bylines by getEmDashCollection.
-const tagEntryIds = [
-	...(featuredPost ? [featuredPost.data.id] : []),
-	...gridPosts.map((p) => p.data.id),
-];
-const tagsByEntry = await getTermsForEntries("posts", tagEntryIds, "tag");
+		return {
+			...ep,
+			seriesPoster: series?.data?.featured_image,
+			seriesSlug: series?.id ?? "",
+			seasonNumber,
+			seriesTitle: series?.data?.title ?? "",
+		};
+	});
 
-const featuredTags = featuredPost
-	? (tagsByEntry.get(featuredPost.data.id) ?? []).map((t) => ({
-			slug: t.slug,
-			label: t.label,
-		}))
-	: [];
+	// Dynamically query all movie genres and all TV genres that contain entries
+	const movieGenrePromises = allGenres.map(async (g: any) => {
+		let entries = await getEntriesByTerm("movies", "movie_genre", g.slug).catch(() => []);
+		if (!Array.isArray(entries) || entries.length === 0) {
+			entries = await getEntriesByTerm("movies", "genre", g.slug).catch(() => []);
+		}
+		return {
+			slug: g.slug,
+			label: g.label,
+			entries: Array.isArray(entries) ? entries : [],
+		};
+	});
 
-const gridPostsWithTags = gridPosts.map((post) => ({
-	post,
-	tags: (tagsByEntry.get(post.data.id) ?? []).map((t) => ({
-		slug: t.slug,
-		label: t.label,
-	})),
-}));
+	const tvGenrePromises = allGenres.map(async (g: any) => {
+		let entries = await getEntriesByTerm("tv", "tv_genre", g.slug).catch(() => []);
+		if (!Array.isArray(entries) || entries.length === 0) {
+			entries = await getEntriesByTerm("tv", "genre", g.slug).catch(() => []);
+		}
+		return {
+			slug: g.slug,
+			label: g.label,
+			entries: Array.isArray(entries) ? entries : [],
+		};
+	});
+
+	const [movieGenreResults, tvGenreResults] = await Promise.all([
+		Promise.all(movieGenrePromises),
+		Promise.all(tvGenrePromises),
+	]);
+
+	movieGenreSections = movieGenreResults.filter((g) => g.entries.length > 0);
+	tvGenreSections = tvGenreResults.filter((g) => g.entries.length > 0);
+
+} catch (e) {
+	console.error("Error fetching homepage content:", e);
+}
 ---
 
-<Base title={siteTitle} description={siteTagline}>
-	<header class="band intro">
-		<div class="frame home-intro">
-			<div>
-				<p class="eyebrow">Blog</p>
-				<h1 class="intro__title">{siteTitle}</h1>
-				{siteTagline && <p class="intro__subtitle">{siteTagline}</p>}
-			</div>
-			<a
-				href="/rss.xml"
-				type="application/rss+xml"
-				class="btn btn--ghost btn--sm home-intro__rss"
-			>
-				<svg
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.75"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					aria-hidden="true"
-				>
-					<path d="M4 11a9 9 0 0 1 9 9"></path>
-					<path d="M4 4a16 16 0 0 1 16 16"></path>
-					<circle cx="5" cy="19" r="1"></circle>
-				</svg>
-				RSS feed
-			</a>
+<CimaLayout title="معاك سيما | مشاهدة أحدث الأفلام والمسلسلات أونلاين">
+	<div class="md3-container pt-6">
+
+		<!-- Homepage SEO Main Heading & Subtitle -->
+		<div class="mb-8 border-b border-[var(--color-border)] pb-4">
+			<h1 class="text-xl md:text-2xl font-black text-[var(--color-text)] tracking-tight">
+				معاك سيما — مشاهدة أحدث الأفلام والمسلسلات العربية والأجنبية أونلاين
+			</h1>
+			<p class="text-xs md:text-sm text-[var(--color-text-secondary)] mt-1.5">
+				دليلك الشامل لمشاهدة وتحميل أقوى الأفلام الحصرية وأحدث حلقات المسلسلات بأعلى جودة Full HD
+			</p>
 		</div>
-	</header>
 
-	{
-		posts.length === 0 ? (
-			<section class="band section">
-				<div class="frame">
-					<div class="empty-state">
-						<h2 class="empty-state__title">No posts yet</h2>
-						<p class="empty-state__text">
-							Create your first post in the admin panel.
-						</p>
-						<div class="empty-state__actions">
-							<a href="/_emdash/admin/content/posts/new" class="btn">
-								Create a post
-							</a>
-						</div>
-					</div>
-				</div>
-			</section>
-		) : (
-			<>
-				{featuredPost && (
-					<section class="band section">
-						<div class="frame">
-							<PostCard
-								post={featuredPost}
-								tags={featuredTags}
-								variant="feature"
-								headingLevel={2}
-								priority
-							/>
-						</div>
-					</section>
-				)}
+		<!-- 1. أحدث الأفلام المضافة (Zero-JS Full Width Horizontal Rail) -->
+		<HorizontalRail
+			title="أحدث الأفلام المضافة"
+			icon="🔥"
+			viewAllHref="/movies"
+		>
+			{movies.map((movie, idx) => (
+				<MediaCard
+					title={movie.data.title}
+					slug={movie.id}
+					type="movie"
+					image={movie.data.featured_image}
+					release={movie.data.release}
+					duration={movie.data.duration}
+					priority={idx < 4}
+					edit={movie.edit}
+				/>
+			))}
+		</HorizontalRail>
 
-				{gridPostsWithTags.length > 0 && (
-					<section class="band section" aria-labelledby="latest-posts">
-						<div class="frame">
-							<div class="section-head">
-								<h2 id="latest-posts" class="section-head__title">
-									Latest posts
-								</h2>
-								{hasMorePosts && (
-									<a href="/posts" class="arrow-link">
-										View all<span class="sr-only"> posts</span>
-										<svg
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="1.75"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											aria-hidden="true"
-										>
-											<path d="M5 12h14" />
-											<path d="m12 5 7 7-7 7" />
-										</svg>
-									</a>
-								)}
-							</div>
-							<div class="post-grid">
-								{gridPostsWithTags.map(({ post, tags }) => (
-									<PostCard
-										post={post}
-										tags={tags}
-										variant="card"
-										headingLevel={3}
-									/>
-								))}
-							</div>
-						</div>
-					</section>
-				)}
-			</>
-		)
-	}
-</Base>
+		<!-- 2. أحدث المسلسلات المضافة -->
+		<HorizontalRail
+			title="أحدث المسلسلات المضافة"
+			icon="📺"
+			viewAllHref="/tv"
+		>
+			{tvSeries.map((series) => (
+				<MediaCard
+					title={series.data.title}
+					slug={series.id}
+					type="tv"
+					image={series.data.featured_image}
+					release={series.data.release}
+					edit={series.edit}
+				/>
+			))}
+		</HorizontalRail>
 
-<style>
-	.home-intro {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
-		align-items: end;
-		gap: var(--spacing-6) var(--spacing-8);
-	}
+		<!-- 3. أحدث الحلقات المضافة (مع عرض بوستر المسلسل - Zero JS EpisodeCard) -->
+		{episodesWithSeries.length > 0 && (
+			<HorizontalRail
+				title="أحدث الحلقات المضافة"
+				icon="⚡"
+				viewAllHref="/tv"
+			>
+				{episodesWithSeries.map((ep) => (
+					<EpisodeCard
+						title={ep.data.title || `الحلقة ${ep.data.episode_number}`}
+						episodeNumber={ep.data.episode_number}
+						duration={ep.data.duration}
+						image={ep.seriesPoster}
+						slug={ep.id}
+						seriesSlug={ep.seriesSlug}
+						seasonNumber={ep.seasonNumber}
+					/>
+				))}
+			</HorizontalRail>
+		)}
 
-	/* Lifts the pill from the line box's bottom onto the last line's baseline */
-	.home-intro__rss {
-		margin-block-end: var(--spacing-2);
-	}
+		<!-- 4. أقسام الأفلام حسب التصنيفات الفنية (Cards Horizontal Scroll - Minimal JS Policy) -->
+		{movieGenreSections.map((sec) => (
+			<HorizontalRail
+				title={`أفلام ${sec.label}`}
+				icon={genreIcons[sec.slug] || "🎬"}
+				viewAllHref={`/movies/genre/${sec.slug}`}
+			>
+				{sec.entries.map((movie: any) => (
+					<MediaCard
+						title={movie.data.title}
+						slug={movie.id}
+						type="movie"
+						image={movie.data.featured_image}
+						release={movie.data.release}
+						duration={movie.data.duration}
+						edit={movie.edit}
+					/>
+				))}
+			</HorizontalRail>
+		))}
 
-	@media (max-width: 720px) {
-		.home-intro {
-			grid-template-columns: minmax(0, 1fr);
-		}
-
-		.home-intro__rss {
-			justify-self: start;
-			margin-block-end: 0;
-		}
-	}
-</style>
+		<!-- 5. أقسام المسلسلات حسب التصنيفات الفنية (Cards Horizontal Scroll - Minimal JS Policy) -->
+		{tvGenreSections.map((sec) => (
+			<HorizontalRail
+				title={`مسلسلات ${sec.label}`}
+				icon={genreIcons[sec.slug] || "📺"}
+				viewAllHref={`/tv/genre/${sec.slug}`}
+			>
+				{sec.entries.map((series: any) => (
+					<MediaCard
+						title={series.data.title}
+						slug={series.id}
+						type="tv"
+						image={series.data.featured_image}
+						release={series.data.release}
+						edit={series.edit}
+					/>
+				))}
+			</HorizontalRail>
+		))}
+	</div>
+</CimaLayout>

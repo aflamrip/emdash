@@ -1,0 +1,120 @@
+---
+import { getSiteSettingsWithCacheHint } from "emdash";
+import { EmDashHead, EmDashBodyStart, EmDashBodyEnd } from "emdash/ui";
+import { createPublicPageContext } from "emdash/page";
+import Header from "../components/organisms/Header.astro";
+import Footer from "../components/organisms/Footer.astro";
+import "../styles/tokens.css";
+import "../styles/theme.css";
+
+interface Props {
+	title: string;
+	description?: string;
+	image?: string;
+	type?: "website" | "article" | "video.movie" | "video.tv_show" | "video.episode";
+	content?: { collection: string; id: string; slug?: string | null };
+	robots?: string;
+}
+
+const {
+	title,
+	description = "مشاهدة أحدث الأفلام والمسلسلات العربية والأجنبية أونلاين بجودة عالية على معاك سيما",
+	image,
+	type = "website",
+	content,
+	robots,
+} = Astro.props;
+
+let siteTitle = "معاك سيما";
+
+try {
+	const settingsResult = await getSiteSettingsWithCacheHint();
+	if (Astro.cache?.enabled) {
+		Astro.cache.set(settingsResult.cacheHint);
+	}
+	if (settingsResult.data?.title) siteTitle = settingsResult.data.title;
+} catch (e) {
+	// Fallback
+}
+
+const fullTitle = title.includes(siteTitle) ? title : `${title} | ${siteTitle}`;
+const pageCtx = createPublicPageContext({
+	Astro,
+	kind: content ? "content" : "custom",
+	pageType: (type.startsWith("video.") ? "article" : type) as "website" | "article",
+	title: fullTitle,
+	description,
+	image,
+	content,
+	siteName: siteTitle,
+});
+---
+
+<!doctype html>
+<html lang="ar" dir="rtl">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>{fullTitle}</title>
+		<meta name="description" content={description} />
+		<meta name="robots" content={robots || "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"} />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+		<!-- EmDash Official Dark Mode Guide Head Script: reads cookie and sets class before first paint -->
+		<script is:inline>
+			(function () {
+				var c = document.cookie;
+				var i = c.indexOf("theme=");
+				var theme = i >= 0 ? c.slice(i + 6).split(";")[0] : null;
+				if (theme === "dark" || theme === "light") {
+					document.documentElement.classList.add(theme);
+				}
+			})();
+		</script>
+
+		<!-- EmDash manages: description, og:title, og:description, og:site_name, twitter:card, twitter:title, twitter:description, canonical (custom), JSON-LD WebSite -->
+		<EmDashHead page={pageCtx} />
+
+		<!-- Explicit overrides: canonical URL (clean path without query params), og:url, og:type, og:image, RSS discovery -->
+		<link rel="canonical" href={new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href} />
+		<meta property="og:url" content={new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin).href} />
+		<meta property="og:type" content={type} />
+		{image && <meta property="og:image" content={image} />}
+		{image && <meta name="twitter:image" content={image} />}
+		{image && <meta name="twitter:card" content="summary_large_image" />}
+		<link rel="alternate" type="application/rss+xml" title={`${siteTitle} – آخر الإضافات`} href="/rss.xml" />
+
+		<!-- Schema.org WebSite — فقط على الصفحة الرئيسية مع SearchAction -->
+		{Astro.url.pathname === "/" && (
+			<script type="application/ld+json" set:html={JSON.stringify({
+				"@context": "https://schema.org",
+				"@type": "WebSite",
+				"name": siteTitle,
+				"description": description,
+				"url": new URL("/", Astro.site ?? Astro.url.origin).href,
+				"potentialAction": {
+					"@type": "SearchAction",
+					"target": {
+						"@type": "EntryPoint",
+						"urlTemplate": new URL("/search?q={search_term_string}", Astro.site ?? Astro.url.origin).href
+					},
+					"query-input": "required name=search_term_string"
+				}
+			})} />
+		)}
+	</head>
+	<body class="bg-[var(--color-bg)] text-[var(--color-text)] min-h-screen flex flex-col font-sans selection:bg-[var(--color-brand)] selection:text-[var(--color-on-brand)] transition-colors duration-300">
+		<EmDashBodyStart page={pageCtx} />
+
+		<Header />
+
+		<main class="flex-1 w-full pb-16">
+			<slot />
+		</main>
+
+		<Footer />
+
+		<EmDashBodyEnd page={pageCtx} />
+
+	</body>
+</html>

@@ -4,6 +4,9 @@
 	"main": "./src/worker.ts",
 	"compatibility_date": "2026-02-24",
 	"compatibility_flags": ["nodejs_compat"],
+	"vars": {
+		"SITE_URL": "https://ma3ak.top"
+	},
 	"d1_databases": [
 		{
 			"binding": "DB",

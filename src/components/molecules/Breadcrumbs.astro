@@ -1,0 +1,65 @@
+---
+interface BreadcrumbItem {
+	label: string;
+	href?: string;
+}
+
+interface Props {
+	items: BreadcrumbItem[];
+	class?: string;
+}
+
+const { items, class: className = "" } = Astro.props;
+
+// Schema.org BreadcrumbList for hierarchical SEO navigation
+const siteOrigin = Astro.site ? Astro.site.origin : Astro.url.origin;
+const breadcrumbSchema = {
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [
+		{
+			"@type": "ListItem",
+			"position": 1,
+			"name": "الرئيسية",
+			"item": new URL("/", siteOrigin).href
+		},
+		...items.map((item, idx) => ({
+			"@type": "ListItem",
+			"position": idx + 2,
+			"name": item.label,
+			...(item.href ? { "item": new URL(item.href, siteOrigin).href } : {})
+		}))
+	]
+};
+---
+
+<nav aria-label="مسار التنقل الهرمي" class={`flex items-center text-xs md:text-sm text-[var(--color-text-secondary)] py-3 overflow-x-auto scrollbar-none ${className}`}>
+	<ol class="flex items-center gap-1.5 whitespace-nowrap">
+		<li>
+			<a href="/" class="hover:text-[var(--color-brand)] transition-colors flex items-center gap-1 text-[var(--color-text-secondary)] font-medium">
+				<svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+					<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+				</svg>
+				<span>الرئيسية</span>
+			</a>
+		</li>
+
+		{items.map((item, idx) => (
+			<li class="flex items-center gap-1.5">
+				<span class="text-[var(--color-muted)] opacity-60">/</span>
+				{item.href && idx < items.length - 1 ? (
+					<a href={item.href} class="hover:text-[var(--color-brand)] transition-colors text-[var(--color-text-secondary)] font-medium">
+						{item.label}
+					</a>
+				) : (
+					<span class="text-[var(--color-brand)] font-bold" aria-current="page">
+						{item.label}
+					</span>
+				)}
+			</li>
+		))}
+	</ol>
+</nav>
+
+<!-- Schema.org BreadcrumbList Structured Data -->
+<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />

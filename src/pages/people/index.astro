@@ -1,0 +1,61 @@
+---
+import CimaLayout from "../../layouts/CimaLayout.astro";
+import Breadcrumbs from "../../components/molecules/Breadcrumbs.astro";
+import { getEmDashCollection } from "emdash";
+
+let people: any[] = [];
+try {
+	const res = await getEmDashCollection("people", {
+		limit: 100,
+		orderBy: { created_at: "desc" },
+	});
+	people = res.entries || [];
+} catch (e) {
+	console.error("Error fetching people:", e);
+}
+---
+
+<CimaLayout
+	title="دليل طاقم العمل والنجوم | معاك سيما"
+	description="تصفح قائمة نجوم الفن وصُنّاع السينما والدراما العربية والعالمية، وتعرّف على سيرهم الذاتية وأبرز أعمالهم."
+>
+	<div class="md3-container pt-4">
+		<Breadcrumbs items={[{ label: "طاقم العمل والنجوم" }]} />
+
+		<div class="my-6">
+			<div class="flex items-center gap-2 text-blue-400 mb-1">
+				<svg class="w-6 h-6 stroke-current fill-none" stroke-width="2" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+				</svg>
+				<span class="text-xs font-bold uppercase tracking-wider">Cast & Crew</span>
+			</div>
+			<h1 class="text-2xl md:text-3xl font-extrabold text-[var(--color-text)]">
+				طاقم العمل ونجوم السينما والتلفزيون
+			</h1>
+			<p class="text-muted text-sm mt-1">
+				استكشف أعمال كبار المخرجين والممثلين وسيرهم الذاتية وقوائم أعمالهم الكاملة
+			</p>
+		</div>
+
+		<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-16">
+			{people.map((person) => (
+				<a
+					href={`/people/${person.id}`}
+					class="group bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-brand)] p-3.5 rounded-xl flex items-center justify-between transition-all duration-200 hover:bg-[var(--color-fill)]"
+				>
+					<div class="flex items-center gap-2.5">
+						<div class="w-8 h-8 rounded-lg bg-[var(--color-fill-strong)] flex items-center justify-center text-[var(--color-brand)] text-sm group-hover:bg-[var(--color-brand)] group-hover:text-[var(--color-on-brand)] transition-colors">
+							👤
+						</div>
+						<h3 class="text-sm font-bold text-[var(--color-text)] group-hover:text-[var(--color-brand)] transition-colors">
+							{person.data.title}
+						</h3>
+					</div>
+					<span class="text-xs text-muted group-hover:text-[var(--color-brand)] transition-colors">
+						←
+					</span>
+				</a>
+			))}
+		</div>
+	</div>
+</CimaLayout>

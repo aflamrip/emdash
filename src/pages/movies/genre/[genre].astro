@@ -1,0 +1,97 @@
+---
+import CimaLayout from "../../../layouts/CimaLayout.astro";
+import MediaCard from "../../../components/molecules/MediaCard.astro";
+import Breadcrumbs from "../../../components/molecules/Breadcrumbs.astro";
+import Chip from "../../../components/atoms/Chip.astro";
+import { getEntriesByTerm, getTerm, getTaxonomyTerms } from "emdash";
+
+const { genre } = Astro.params;
+if (!genre) {
+	return Astro.redirect("/movies");
+}
+
+let term: any = null;
+let movies: any[] = [];
+let allGenres: any[] = [];
+
+try {
+	// Try movie_genre first, fallback to genre
+	let [termRes, entriesRes, allGenresRes] = await Promise.all([
+		getTerm("movie_genre", genre).catch(() => getTerm("genre", genre)),
+		getEntriesByTerm("movies", "movie_genre", genre).catch(() => []),
+		getTaxonomyTerms("movie_genre").catch(() => getTaxonomyTerms("genre")),
+	]);
+
+	term = termRes;
+	let fetchedMovies = Array.isArray(entriesRes) ? entriesRes : [];
+
+	// If no entries by movie_genre, try by genre
+	if (fetchedMovies.length === 0) {
+		const fallbackEntries = await getEntriesByTerm("movies", "genre", genre).catch(() => []);
+		fetchedMovies = Array.isArray(fallbackEntries) ? fallbackEntries : [];
+	}
+
+	movies = fetchedMovies;
+	allGenres = allGenresRes || [];
+} catch (e) {
+	console.error("Error fetching genre movies:", e);
+}
+
+const genreTitle = term?.label || genre;
+---
+
+<CimaLayout
+	title={`أفلام ${genreTitle} | معاك سيما`}
+	description={`شاهد وتصفح أحدث أفلام ${genreTitle} العربية والأجنبية المترجمة بجودة عالية أونلاين.`}
+>
+	<div class="md3-container pt-4">
+		<!-- Breadcrumbs -->
+		<Breadcrumbs
+			items={[
+				{ label: "الأفلام", href: "/movies" },
+				{ label: `تصنيف: ${genreTitle}` },
+			]}
+		/>
+
+		<!-- Header -->
+		<div class="my-6">
+			<h1 class="text-2xl md:text-3xl font-extrabold text-[var(--color-text)] flex items-center gap-2">
+				<span>🏷️</span>
+				<span>أفلام {genreTitle}</span>
+			</h1>
+			<p class="text-muted text-sm mt-1">
+				قائمة بأفضل وأحدث أفلام تصنيف {genreTitle} المتاحة للمشاهدة والتحميل المباشر
+			</p>
+		</div>
+
+		<!-- Genres Filter -->
+		<div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
+			<Chip href="/movies">كل الأفلام</Chip>
+			{allGenres.map((g) => (
+				<Chip href={`/movies/genre/${g.slug}`} active={g.slug === genre}>
+					{g.label}
+				</Chip>
+			))}
+		</div>
+
+		<!-- Grid of Movies (Minimal JS with MediaCard.astro) -->
+		{movies.length > 0 ? (
+			<div class="media-grid mb-14">
+				{movies.map((movie) => (
+					<MediaCard
+						title={movie.data.title}
+						slug={movie.id}
+						type="movie"
+						image={movie.data.featured_image}
+						release={movie.data.release}
+						duration={movie.data.duration}
+					/>
+				))}
+			</div>
+		) : (
+			<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-12 text-center text-muted my-6">
+				لا توجد أفلام مضافة في تصنيف {genreTitle} حالياً.
+			</div>
+		)}
+	</div>
+</CimaLayout>

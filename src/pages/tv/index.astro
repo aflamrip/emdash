@@ -1,0 +1,68 @@
+---
+import CimaLayout from "../../layouts/CimaLayout.astro";
+import MediaCard from "../../components/molecules/MediaCard.astro";
+import Chip from "../../components/atoms/Chip.astro";
+import Breadcrumbs from "../../components/molecules/Breadcrumbs.astro";
+import { getEmDashCollection, getTaxonomyTerms } from "emdash";
+
+const [tvRes, tGenresRes] = await Promise.all([
+	getEmDashCollection("tv", { limit: 50, orderBy: { created_at: "desc" } }),
+	getTaxonomyTerms("tv_genre").catch(() => getTaxonomyTerms("genre")),
+]);
+
+const tvSeries = tvRes.entries || [];
+const tvGenres = tGenresRes || [];
+---
+
+<CimaLayout
+	title="دليل المسلسلات الرئيسي | معاك سيما"
+	description="مشاهدة وتحميل أحدث المسلسلات العربية والتركية والأجنبية المترجمة بجميع المواسم والحلقات كاملة."
+>
+	<div class="md3-container pt-4">
+		<!-- Breadcrumbs -->
+		<Breadcrumbs items={[{ label: "المسلسلات" }]} />
+
+		<!-- Header -->
+		<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 my-6">
+			<div>
+				<h1 class="text-2xl md:text-3xl font-extrabold text-[var(--color-text)] flex items-center gap-2">
+					<span>📺</span>
+					<span>دليل المسلسلات الرئيسي</span>
+				</h1>
+				<p class="text-muted text-sm mt-1">
+					أضخم مكتبة مسلسلات عربية وعالمية مترجمة مع سهولة التنقل بين المواسم والحلقات
+				</p>
+			</div>
+
+			<span class="text-xs text-muted bg-[var(--color-surface)] px-3 py-1.5 rounded-full border border-[var(--color-border)] self-start md:self-auto">
+				إجمالي المسلسلات: {tvSeries.length}
+			</span>
+		</div>
+
+		<!-- TV Sections & Genres Filter Chips -->
+		<div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
+			<Chip href="/tv" active={true}>كل المسلسلات</Chip>
+			<Chip href="/category/series-arabic">🌙 مسلسلات عربية</Chip>
+			<Chip href="/category/series-foreign">🌟 مسلسلات أجنبية مترجمة</Chip>
+			{tvGenres.map((g: any) => (
+				<Chip href={`/tv/genre/${g.slug}`}>
+					🏷️ {g.label}
+				</Chip>
+			))}
+		</div>
+
+		<!-- TV Responsive Grid (Minimal JS with MediaCard.astro) -->
+		<div class="media-grid mb-14">
+			{tvSeries.map((series, idx) => (
+				<MediaCard
+					title={series.data.title}
+					slug={series.id}
+					type="tv"
+					image={series.data.featured_image}
+					release={series.data.release}
+					priority={idx < 4}
+				/>
+			))}
+		</div>
+	</div>
+</CimaLayout>

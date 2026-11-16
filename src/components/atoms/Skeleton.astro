@@ -1,0 +1,35 @@
+---
+interface Props {
+	type?: "card" | "text" | "video" | "avatar";
+	class?: string;
+}
+
+const {
+	type = "text",
+	class: className = "",
+} = Astro.props;
+---
+
+{
+	type === "card" ? (
+		<div
+			class={`skeleton-shimmer rounded-xl aspect-[2/3] w-full ${className}`}
+			aria-busy="true"
+		/>
+	) : type === "video" ? (
+		<div
+			class={`skeleton-shimmer rounded-xl aspect-video w-full ${className}`}
+			aria-busy="true"
+		/>
+	) : type === "avatar" ? (
+		<div
+			class={`skeleton-shimmer rounded-full w-12 h-12 ${className}`}
+			aria-busy="true"
+		/>
+	) : (
+		<div
+			class={`skeleton-shimmer rounded h-4 w-full ${className}`}
+			aria-busy="true"
+		/>
+	)
+}
